@@ -1,0 +1,19 @@
+citHeader("To cite the ?? package in publications please use:")
+
+year <- sub(".*(2[[:digit:]]{3})-.*", "\\1", meta$Date, perl = TRUE)
+vers <- paste("R package version", meta$Version)
+
+citEntry(entry="Article",
+    title = "Joint estimation of univariate regressions",
+    author = personList(as.person("M.M. Münch"),
+                        as.person("M.A. van de Wiel"),
+                        as.person("C.F. Peeters")),
+    journal = "Unpublished manuscript",
+    volume = "",
+    number = "",
+    pages =  "",
+    year = "In preparation",
+    textVersion =
+      paste("Münch, M.M., van de Wiel, M.A., Peeters, C.F. (in preparation). ", "Graph-informed penalized regression. ",
+        	  "Unpublished manuscript.", sep = "")
+)

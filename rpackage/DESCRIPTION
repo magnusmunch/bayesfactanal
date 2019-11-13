@@ -1,0 +1,18 @@
+Package: netren
+Type: Package
+Title: Graph-informed penalized regression
+Version: 0.0.0.9000
+Date: 2019-11-13
+Author: Magnus M. Münch
+Maintainer: Magnus M. Münch <m.munch@vumc.nl>
+Description: Graph-informed penalized regression
+Depends: R (>= 3.4.1)
+License: GPL (>= 2)
+Imports: Rcpp (>= 0.12.14)
+LinkingTo: Rcpp, RcppArmadillo
+Suggests: knitr, testthat
+VignetteBuilder: knitr
+URL: https://github.com/magnusmunch/netren/
+NeedsCompilation: yes
+Encoding: UTF-8
+LazyData: true
