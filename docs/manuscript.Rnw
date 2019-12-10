@@ -1,0 +1,561 @@
+% set options
+<<settings, include=FALSE, echo=FALSE>>=
+opts_knit$set(root.dir="..", base.dir="../figs")
+opts_chunk$set(fig.align='center', fig.path="../figs/", 
+               echo=FALSE, cache=FALSE, message=FALSE, fig.pos='!ht')
+knit_hooks$set(document=function(x) {
+  sub('\\usepackage[]{color}', '\\usepackage{xcolor}', x, fixed=TRUE)})
+@
+
+% read figure code
+<<figures, include=FALSE>>=
+read_chunk("code/figures.R")
+@
+
+\documentclass[a4paper,hidelinks]{article}
+% \usepackage{url,bm,algorithm,algpseudocode,mathtools,bbm,pgfplotstable,bm,amsmath,amssymb,amsthm,amsfonts,graphics,graphicx,epsfig,rotating,caption,subcaption,natbib,appendix,titlesec,multicol,hyperref,verbatim,bbm,algorithm,algpseudocode,pgfplotstable,threeparttable, booktabs,mathtools,dsfont}
+\usepackage{bm,amsmath,amssymb,amsthm,amsfonts,graphics,graphicx,epsfig,
+rotating,caption,subcaption,natbib,appendix,titlesec,multicol,hyperref,verbatim,
+bbm,algorithm,algpseudocode,pgfplotstable,threeparttable,booktabs,mathtools,
+dsfont,parskip,xr}
+\externaldocument[sm-]{supplement}
+
+% vectors and matrices
+\newcommand{\bbeta}{\bm{\beta}}
+\newcommand{\btau}{\bm{\tau}}
+\newcommand{\bsigma}{\bm{\sigma}}
+\newcommand{\balpha}{\bm{\alpha}}
+\newcommand{\bomega}{\bm{\omega}}
+\newcommand{\bOmega}{\bm{\Omega}}
+\newcommand{\bSigma}{\bm{\Sigma}}
+\newcommand{\bkappa}{\bm{\kappa}}
+\newcommand{\btheta}{\bm{\theta}}
+\newcommand{\bmu}{\bm{\mu}}
+\newcommand{\bpsi}{\bm{\psi}}
+\newcommand{\bchi}{\bm{\chi}}
+\newcommand{\bgamma}{\bm{\gamma}}
+\newcommand{\bGamma}{\bm{\Gamma}}
+\newcommand{\blambda}{\bm{\lambda}}
+\newcommand{\bLambda}{\bm{\Lambda}}
+\newcommand{\bPsi}{\bm{\Psi}}
+\newcommand{\bphi}{\bm{\phi}}
+\newcommand{\Y}{\mathbf{Y}}
+\newcommand{\y}{\mathbf{y}}
+\newcommand{\X}{\mathbf{X}}
+\newcommand{\x}{\mathbf{x}}
+\newcommand{\I}{\mathbf{I}}
+\newcommand{\T}{\mathbf{T}}
+\newcommand{\Z}{\mathbf{Z}}
+\newcommand{\W}{\mathbf{W}}
+\renewcommand{\O}{\mathbf{O}}
+\newcommand{\B}{\mathbf{B}}
+\renewcommand{\H}{\mathbf{H}}
+\newcommand{\U}{\mathbf{U}}
+\newcommand{\D}{\mathbf{D}}
+\newcommand{\Vm}{\mathbf{V}}
+\newcommand{\rv}{\mathbf{r}}
+\newcommand{\A}{\mathbf{A}}
+\newcommand{\Q}{\mathbf{Q}}
+\newcommand{\Sm}{\mathbf{S}}
+\newcommand{\0}{\bm{0}}
+\newcommand{\tx}{\tilde{\mathbf{x}}}
+\newcommand{\hy}{\hat{y}}
+\newcommand{\tm}{\tilde{m}}
+\newcommand{\tkappa}{\tilde{\kappa}}
+\newcommand{\m}{\mathbf{m}}
+\newcommand{\C}{\mathbf{C}}
+\renewcommand{\v}{\mathbf{v}}
+\newcommand{\g}{\mathbf{g}}
+\newcommand{\s}{\mathbf{s}}
+\renewcommand{\c}{\mathbf{c}}
+\newcommand{\ones}{\mathbf{1}}
+\newcommand{\R}{\mathbf{R}}
+\newcommand{\rvec}{\mathbf{r}}
+\newcommand{\Lm}{\mathbf{L}}
+
+% functions and operators
+\renewcommand{\L}{\mathcal{L}}
+\newcommand{\G}{\mathcal{G}}
+\renewcommand{\P}{\mathcal{P}}
+\newcommand{\argmax}{\text{argmax} \,}
+\newcommand{\expit}{\text{expit}}
+\newcommand{\erfc}{\text{erfc}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\V}{\mathbb{V}}
+\newcommand{\Cov}{\mathbb{C}\text{ov}}
+\newcommand{\tr}{^{\text{T}}}
+\newcommand{\diag}{\text{diag}}
+\newcommand{\KL}{D_{\text{KL}}}
+\newcommand{\trace}{\text{tr}}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\appropto}{\mathrel{\vcenter{
+  \offinterlineskip\halign{\hfil$##$\cr
+    \propto\cr\noalign{\kern2pt}\sim\cr\noalign{\kern-2pt}}}}}
+\newcommand{\card}[1]{\text{card} \left( #1 \right)}
+\makeatletter
+\newcommand*{\defeq}{\mathrel{\rlap{%
+			\raisebox{0.3ex}{$\m@th\cdot$}}%
+		\raisebox{-0.3ex}{$\m@th\cdot$}}%
+	=}
+\makeatother
+
+% distributions
+\newcommand{\N}{\text{N}}
+\newcommand{\TG}{\text{TG}}
+\newcommand{\Bi}{\text{Binom}}
+\newcommand{\PG}{\text{PG}}
+\newcommand{\Mu}{\text{Multi}}
+\newcommand{\GIG}{\text{GIG}}
+\newcommand{\IGauss}{\text{IGauss}}
+\newcommand{\Un}{\text{U}}
+
+% syntax and readability
+\renewcommand{\(}{\left(}
+\renewcommand{\)}{\right)}
+\renewcommand{\[}{\left[}
+\renewcommand{\]}{\right]}
+\renewcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\makeatletter
+\newcommand{\vast}{\bBigg@{3}}
+\newcommand{\vastt}{\bBigg@{4}}
+\newcommand{\Vast}{\bBigg@{5}}
+\makeatother
+
+% settings
+\pgfplotsset{compat=1.16}
+\graphicspath{{../figs/}}
+\setlength{\evensidemargin}{.5cm} \setlength{\oddsidemargin}{.5cm}
+\setlength{\textwidth}{15cm}
+\title{Empirical Bayes network-regularized elastic net regression}
+\date{\today}
+\author{Magnus M. M\"unch$^{1,2}$\footnote{Correspondence to: 
+\href{mailto:m.munch@amsterdamumc.nl}{m.munch@vumc.nl}}, Mark A. van de 
+Wiel$^{1,3}$, \\ Aad W. van der Vaart$^{2}$, and Carel F.W. Peeters$^{1}$}
+
+\begin{document}
+
+	\maketitle
+	
+	\noindent
+	1. Department of Epidemiology \& Biostatistics, Amsterdam UMC, VU University, 
+	PO Box 7057, 1007 MB Amsterdam, The Netherlands \\
+	2. Mathematical Institute, Leiden University, Leiden, The Netherlands \\
+	3. MRC Biostatistics Unit, Cambridge Institute of Public Health, Cambridge,
+	United Kingdom
+	
+	\begin{abstract}
+		{...}
+	\end{abstract}
+	
+	\noindent\textbf{Keywords}: Empirical Bayes; High-dimensional data; 
+	Prediction; Network
+	
+	\noindent\textbf{Software available from}: 
+	\url{https://github.com/magnusmunch/netren}
+	
+	\section{Introduction}
+	\subsection{Problem statement}
+	Classification models based on omics data are ubiquitous in clinical practice 
+	nowadays. Examples of the application of such models are disease risk 
+	prediction, treatment response prediction, prognostics, treatment selection, 
+	and disease diagnosis. Selecting a small and manageable subset of omics 
+	features, while retaining classification performance, is paramount to the 
+	practical implementation of such models. 
+
+	Estimation of such classification models is impeded by the high dimensional 
+	character of omics data, i.e. $p > n$, with $p$ and $n$ the number of features
+	and samples, respectively. High dimensionality causes problems with the 
+	identifiability of standard statistical models and requires computationally
+	efficient model estimation. Another characteristic of omics data is the 
+	availability of extra information on the features. One abundant source of such
+	information is the collection of biologically verified molecular pathways 
+	published in online repositories, such as KEGG \cite[]{kanehisa_kegg:_2000}.
+	Inclusion of such pathway information into the estimation of classification 
+	models has been empirically shown to enhance predictive performance and/or 
+	interpretability \cite[]{kim_network-based_2013, pan_incorporating_2010, 
+	li_variable_2010, binder_incorporating_2009, wei_nonparametric_2007}. 
+
+	Biologically, it may be expected that features with adjacent vertices in a 
+	network have a similar effect on the outcome of a classification model. 
+	Therefore, most network-based prediction methods use some form of penalisation
+	based on the graph Laplacian. The Laplacian induces a penalty on the 
+	difference between the model parameters of neighbouring vertices to ensure 
+	similar effect sizes for neighbouring vertices. If the chosen penalty is the
+	$L_1$-norm we end op with a generalisation of the fused lasso 
+	\cite[]{tibshirani_sparsity_2005}. Similarly, the $L_2$-norm leads to a 
+	generalised fused ridge regression.
+	
+	\subsection{Related work}
+	Graph-based sparse linear discriminant analysis for high-dimensional 
+	classification (2018) by Jianyu Liu and Guan Yu and Yufeng Liu.
+	
+	li en li (2008): lasso penalty met fused ridge op basis van network 
+	Laplacian
+	
+	Binder en Schumacher (2009): componentwise boosting with L1-norm penalty. 
+	After every time a feature is included during boosting step, the penalty 
+	parameter for the	feature is increased, while the penalty parameter for 
+	connected features is	reduced.
+	
+	Peterson, Stingo, and vanucci (2016): model wat Carel voorstelde 
+	(Li \& Zhang (2010) en 	stingo, chen, tadesse \& vannucci (2011) zijn ook 
+	vergelijkbaar)
+
+	\section{Model}
+	\subsection{Logistic regression}
+	In logistic regression the outcome variables are assumed to be binary or sums
+	of $m_i$ disjoint binary Bernoulli trials ($y_i = \sum_{l=1}^{m_i} k_l, k_l 
+	\in \{0,1\}$ for $i=1, \dots, n$). The binomial logistic model relates the 
+	responses to the $p$-dimensional covariate vectors $\x_i = \begin{bmatrix} 
+	x_{i1} & \cdots & x_{ip}\end{bmatrix} \tr$ through $y_i \sim \mathcal{B} 
+	\( m_i, \expit ( \x_i\tr \bbeta ) \)$, where $\mathcal{B} (m,\upsilon)$ is 
+	the binomial distribution with number of trials $m$ and probability 
+	$\upsilon$, and $\expit \( \x_i\tr \bbeta \) = \exp(\x\tr_i \bbeta)/
+	[1 + \exp(\x\tr_i \bbeta)]$. Note that if $m_i=1$ for $i=1, \dots, n$, the 
+	model reduces to a binary logistic regression model. Throughout the rest of
+	the paper we assume that the model matrix $\X = \begin{bmatrix} \x_1 & 
+	\cdots & \x_n \end{bmatrix}\tr$ is standardized such that 
+	$\frac{1}{n}\sum_{i=1}^n x_{ij}=0$ and $\frac{1}{n}\sum_{i=1}^n x_{ij}^2=1$ 
+	for $j=1, \dots, p$.
+	
+	\subsection{Bayesian network-based elastic net regularization}
+	The purpose here is to incorporate multiple prior pathways into the analysis. To do so, we assume that the $G$ pathways are given as disjoint graphs with vertices $V_g = \{\upsilon_j : j \in \mathcal{G}_g\}$ for $g=1, \dots, G$, where $\mathcal{G}_g$ is the index set of the features corresponding to pathway $g$. The edges in pathway $g$ are denoted as $\mathcal{E}_g = \{\upsilon_j \sim \upsilon_k : j,k \in \mathcal{G}_g \}$ for $g=1, \dots, G$, where $x \sim y$ denotes an edge between vertices $x$ and $y$. The full network is denoted by edges $\mathcal{E}$ and vertices $\mathcal{G}$. Furthermore, throughout this document, we will let empty sums and products evaluate to zero and one, respectively. We also slightly abuse notation and let 
+	$$
+	\sum_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} a_{jk} := \sum_{j =1}^p \sum_{\substack{k < j: \\ \upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} a_{jk}.
+	$$
+	
+	Incorporation of these pathways should preferably influence the prediction model in two ways: (i) the overall importance of a pathway for the prediction problem at hand should influence the estimated absolute effect sizes for the features in that pathway and (ii) features with an edge in an important pathway should have similarly sized effect sizes, because an edge indicates a functional relationships between the features.
+	
+	Incorporation of these two desiderata could be achieved by estimation through a suitably penalised likelihood:
+	\begin{subequations}\label{eq:penlik}
+		\begin{align}
+		\hat{\bbeta} & := \underset{\bbeta}{\argmax} \ell(\y ; \bbeta) -\lambda_1 \sum_{g=1}^G \sqrt{\lambda'_g} \sum_{j \in \mathcal{G}_g}  |\beta_j| - \frac{\lambda_2}{2} \sum_{g=1}^G \lambda'_g \sum_{j \in \mathcal{G}_g}  \beta_j^2 \\
+		& \,\,\,\, - \gamma_1 \sum_{g=1}^G \sqrt{\gamma'_g} \sum_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} |\beta_j - \beta_k| - \frac{\gamma_2}{2} \sum_{g=1}^G \gamma'_g \sum_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} (\beta_j - \beta_k)^2,
+		\end{align}
+	\end{subequations}
+	for some fixed (or separately estimated) hyper/penalty parameters $\lambda_1, \lambda_2, \gamma_1, \gamma_2 > 0$, as well as suitably chosen $\lambda'_g, \gamma'_g > 0$, for $g=1,\dots,G$. Note that we divide $\lambda_2$ and $\gamma_2$ by two to simplify the computations in the following.
+	
+	A nice feature of estimation through (\ref{eq:penlik}) is that the importance of a particular pathway is expressed through the $\lambda'_g$ and $\gamma'_g$. A large $\lambda'_g$ shrinks the absolute effect sizes in pathway $g$ towards zero, thereby satisfying desideratum (i). Similarly, a large $\gamma'_g$ shrinks the effect sizes in pathway $g$ towards each other, thereby satisfying the desideratum (ii).
+
+	The Bayesian equivalent of the estimates in (\ref{eq:penlik}) is obtained by maximum a posteriori (MAP) estimation under the following prior:
+	\begin{align*}
+	\pi(\bbeta) & \propto \exp \(-\lambda_1 \sum_{g=1}^G \sqrt{\lambda'_g} \sum_{j \in \mathcal{G}_g}  |\beta_j| - \frac{\lambda_2}{2} \sum_{g=1}^G \lambda'_g \sum_{j \in \mathcal{G}_g}  \beta_j^2 \) \\
+	& \,\,\,\, \cdot \exp \[ - \gamma_1 \sum_{g=1}^G \sqrt{\gamma'_g} \sum_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} |\beta_j - \beta_k| - \frac{\gamma_2}{2} \sum_{g=1}^G \gamma'_g \sum_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} (\beta_j - \beta_k)^2\].
+	\end{align*}
+	After introduction of three layers of latent variables $\bomega = \begin{bmatrix} \omega_1 & \cdots & \omega_n \end{bmatrix} \tr$ \cite[]{polson_bayesian_2013}, $\btau = \begin{bmatrix} \tau_1 & \cdots & \tau_p \end{bmatrix} \tr$, and $\bsigma = \begin{bmatrix} \sigma_{jk} \end{bmatrix} \tr$, for $j,k: \upsilon_j \sim \upsilon_k \in \mathcal{E}$ \cite[]{kyung_penalized_2010}, we arrive at the following Bayesian hierarchical model:
+	\begin{subequations}\label{eq:bayesmod}
+		\begin{align}
+		\y| \bbeta & \sim \prod_{i=1}^n \mathcal{B} \left( m_i, \expit ( \x\tr_i \bbeta ) \right),  \\
+		\bomega | \bbeta & \sim \prod_{i=1}^n \mathcal{PG}(m_i, |\x_i \tr \bbeta|), \\
+		\bbeta | \btau, \bsigma & \sim \prod_{g=1}^G \mathcal{N} \left(0, \( \lambda_2 \lambda'_g \tilde{\T}_g + \gamma_2 \gamma'_g \tilde{\Sm}_g \)^{-1} \right), \\
+		\btau, \bsigma & \overset{D}{=} \Biggl\{ \prod_{g=1}^G \mathbbm{1} \{\tau_j, \sigma_{jk} > 1 \} (\lambda'_g)^{\frac{|\mathcal{G}|}{2}} |\lambda_2 \lambda'_g \tilde{\T}_g + \gamma_2 \gamma'_g \tilde{\Sm}_g|^{-1/2} \label{eq:tsprior1}\\
+		& \,\,\,\,\,\, \cdot \[ \prod_{j \in \mathcal{G}_g} (\tau_j - 1)^{-\frac{1}{2}} \exp \( -\frac{\lambda_1^2}{2 \lambda_2} \tau_j \) \] \label{eq:tsprior2} \\
+		& \,\,\,\,\,\, \cdot \[ \prod_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} (\sigma_{jk} - 1)^{-\frac{1}{2}} \exp \( -\frac{\gamma_1^2}{2 \gamma_2} \sigma_{jk} \) \] \cdot c\(\lambda_1, \lambda_2, \gamma_1, \gamma_2, \frac{\gamma'_g}{\lambda'_g}\) \Biggr\}, \label{eq:tsprior3}
+		\end{align}
+	\end{subequations}
+	where $c\(\lambda_1, \lambda_2, \gamma_1, \gamma_2, \frac{\gamma'_g}{\lambda'_g}\)$ is a normalising constant, $\tilde{\T}_g = \diag [\tau_j/(\tau_j - 1)]$, for $j \in \mathcal{G}_g$, and
+	$$
+	(\tilde{\Sm}_g)_{jk} = \begin{cases}
+	\sum_{\substack{l \neq j: \\ \upsilon_j \sim \upsilon_l \\ \in \mathcal{E}_g}} \sigma_{jl}/(\sigma_{jl} - 1) & \text{if } j=k, \\
+	- \sigma_{jk}/(\sigma_{jk} - 1) & \text{if } \upsilon_j \sim \upsilon_k \in \mathcal{E}_g \text{ and } j \neq k, \\
+	0 & \text{otherwise}.
+	\end{cases}
+	$$
+	The posterior is not available in closed form, but we could proceed with inference by Gibbs sampling or some deterministic approximation method, such as variational Bayes.
+
+	\subsection{Empirical Bayes}\label{sec:empbayes}
+	So far we have ignored the choice of the `global' penalty parameters $\lambda_1$, $\lambda_2$, $\gamma_1$, $\gamma_2$, and their pathway-specific multipliers $\lambda'_g$ and $\gamma'_g$. A common method of estimating such hyper-parameters is through cross-validation. With so many hyper-parameters this is computationally infeasible in most high dimensional settings. We therefore propose to estimate the `global' penalty parameters by cross-validation and the penalty multipliers by empirical Bayes, similar in nature as in \cite{munch_adaptive_2018}.
+	
+	In Empirical Bayes the prior is estimated from the data, which renders it a frequentist treatment of Bayesian models. In \cite{casella_empirical_2001} an EM algorithm is introduced that estimates the penalty parameter. In our case we iteratively maximise the expectation of the joint log likelihood with respect to the posterior:
+	\begin{equation}\label{eq:ebEM}
+	\blambda'^{(k + 1)},\bgamma'^{(k+1)} = \underset{\blambda', \bgamma'}{\argmax} \E_{\bomega, \bbeta, \btau, \bsigma| \y} \[ \log \L_{\blambda', \bgamma'}(\y, \bomega, \bbeta, \btau, \bsigma) | \blambda^{(k)}, \gamma'^{(k)} \]
+	\end{equation}
+	until convergence to a local maximum. The difficulty herein is the expectation over the posterior, which is not available in closed form. We approximate it by variational Bayes.
+	
+	\subsection{Variational Bayes}
+	Let $\psi_j = \tau_j - 1$ and $\chi_{jk} = \sigma_{jk} - 1$. A variational approximation to the model in (\ref{eq:bayesmod}) is given by:
+	$$
+	Q(\bomega, \bbeta, \bpsi, \bchi) = q_{\bomega}(\bomega) q_{\bbeta}(\bbeta) q_{\bpsi}(\bpsi) q_{\bchi}(\bchi),
+	$$
+	where
+	\begin{align*}
+	q^*_{\bomega} (\bomega) & \overset{D}{=} \prod_{i=1}^n \mathcal{PG} (m_i, c_i), \\
+	q^*_{\bbeta}(\bbeta) & \overset{D} = \mathcal{N} (\bmu, \bSigma), \\
+	q^*_{\bpsi}(\bpsi) & \overset{D} = \prod_{g=1}^G \prod_{j \in \mathcal{G}_g} \mathcal{GIG} \(\frac{1}{2}, \frac{\lambda_1^2}{\lambda_2}, \eta_j\), \\
+	q^*_{\bchi}(\bchi) & \overset{D} = \prod_{g=1}^G \prod_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} \mathcal{GIG} \(\frac{1}{2}, \frac{\gamma_1^2}{\gamma_2}, \zeta_{jk}\).
+	\end{align*}
+	
+	The variational parameters are estimated by updating them until convergence:
+	\begin{subequations}\label{eq:estequations}
+		\begin{align}
+		\bSigma^{(t+1)} & = \Bigg\{ \X \tr \diag \[\frac{m_i}{2c_i^{(t)}} \tanh \( \frac{c_i^{(t)}}{2} \) \] \X \\
+		& \,\,\,\,\,\,\,\,\,\, + \lambda_2 \bLambda' + \lambda_1 \sqrt{\lambda_2} \bLambda' \diag \[(\eta_j^{(t)})^{-1/2} \]  \\
+		& \,\,\,\,\,\,\,\,\,\, + \gamma_2 \bGamma' \Lm + \gamma_1 \sqrt{\gamma_2} \bGamma' \diag\( \tilde{\Z}_g^{(t)}\) \Bigg\}^{-1} , \\
+		\bmu^{(t+1)} & = \bSigma^{(t+1)} \X \tr (\y - \frac{1}{2}\m), \\
+		c_i^{(t+1)} & = \sqrt{\x_i \tr \bSigma^{(t+1)} \x_i + (\x_i \tr \bmu^{(t+1)})^2}, \\
+		\eta_j^{(t+1)} & = \lambda_2 \lambda'_{g(j)} [\bSigma_{jj}^{(t+1)} + (\bmu_j^{(t+1)})^2], \\
+		\zeta_{jk}^{(t+1)} & = \gamma_2 \gamma'_{g(jk)} [(\bmu_j^{(t+1)})^2 + (\bmu_k^{(t+1)})^2 \\
+		& \,\,\,\,\,\,\,\,\,\, - 2 \bmu_j^{(t+1)} \bmu_k^{(t+1)} + \bSigma_{jj}^{(t+1)} + \bSigma_{kk}^{(t+1)} - 2 \bSigma_{jk}^{(t+1)} ],
+		\end{align}
+	\end{subequations}
+	where $\bLambda'=\diag(\lambda'_{g(j)})$, $\bGamma'$ is a diagonal matrix with each $\gamma'_g$ repeated $\mathcal{G}_g$ times , $\Lm$ is the unweighted and unnormalised Laplacian matrix of the prior graph $(\mathcal{G}, \mathcal{E})$ and
+	$$
+	(\tilde{\Z}_g^{(t)})_{jk} = \begin{cases}
+	\sum_{\substack{l \neq j: \\ \upsilon_j \sim \upsilon_l \\ \in \mathcal{E}_g}} (\zeta^{(t)}_{jl})^{-1/2} & \text{if } j=k, \\
+	- (\zeta^{(t)}_{jk})^{-1/2} & \text{if } \upsilon_j \sim \upsilon_k \in \mathcal{E}_g \text{ and } j \neq k, \\
+	0 & \text{otherwise}.
+	\end{cases}
+	$$
+	
+	\subsection{Empirical-variational Bayes}
+	
+	The expectation in Section \ref{sec:empbayes} is approximated using variational Bayes, i.e., $\E_{\bomega, \bbeta, \btau, \bsigma | \y} [ \cdot ] \approx \E_Q [\cdot]$. In our case, this amounts to:
+	\begin{align*}
+	\E_Q & [\log \L_{\blambda', \bgamma'} (\y, \bomega, \bbeta, \btau, \bsigma) | \blambda'^{(k)}, \bgamma'^{(k)}] \propto \sum_{g=1}^G \frac{|\mathcal{G}_g|}{2} \log \lambda'_g \\
+	& - \frac{\lambda_2}{2} \sum_{g=1}^G \lambda'_g d_g^{(k)} - \frac{\gamma_2}{2} \sum_{g=1}^G \gamma'_g h_g^{(k)} + \sum_{g=1}^G \log c\( \lambda_1, \lambda_2, \gamma_1, \gamma_2, \frac{\gamma'_g}{\lambda'_g} \),
+	\end{align*}
+	where proportionality is with respect to the $\lambda'_g$ and $\gamma'_g$, and
+	\begin{align*}
+	d_g^{(k)} & = \sum_{j \in \mathcal{G}_g} \[\bSigma_{jj}^{(k)} + (\bmu_j^{(k)})^2\] \(1 + \frac{\lambda_1}{\sqrt{\lambda_2 \eta_j^{(k)}}}\), \\
+	h_g^{(k)} & = \sum_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} \[ (\bmu_j^{(k)})^2 + (\bmu_k^{(k)})^2 - 2 \bmu_j^{(k)} \bmu_k^{(k)} + \bSigma_{jj}^{(k)} + \bSigma_{kk}^{(k)} - 2 \bSigma_{jk}^{(k)} \] \\
+	&  \,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\, \cdot \( 1 + \frac{\gamma_1}{\sqrt{\gamma_2 \zeta_{jk}^{(k)}}} \).
+	\end{align*}
+	
+	Maximisation of this function with respect to $\blambda'$ and $\bgamma'$ is problematic, since we do not now the form of $c( \cdot )$. To circumvent this problem and simplify the computations, we will assume that $\frac{\gamma'_g}{\lambda'_g}=u$ for some constant $u$ and for all $g=1, \dots, G$. We argue that this is not unreasonable, since it describes the relationship between the information in the vertices and the information in the edges as constant over different pathways. So in order to estimate our new penalty multipliers, we solve the following optimisation problem:
+	\begin{align*}
+	\blambda'^{(k+1)} & = \underset{\blambda'}{\argmax} \sum_{g=1}^G \frac{|\mathcal{G}_g|}{2} \log \lambda'_g - \frac{1}{2} \sum_{g=1}^G \lambda'_g \(\lambda_2 d_g^{(k)} + u \gamma_2 h_g^{(k)}\),
+	\end{align*}
+	which is a convex problem, and afterwards calculate $\gamma'_g=u \cdot \lambda'_g$. An (approximate) alternative, without this assumption, is described in Section \ref{sec:apprempvarbayes}.
+	
+	\section{Discussion}\label{sec:discussion}
+
+	\section*{Software}
+	The method is available as an \texttt{R} package from 
+	\url{https://github.com/magnusmunch/netren/}.
+	
+	\section*{Supplementary Material}
+	Supplementary Material is available online from 
+	\url{https://github.com/magnusmunch/netren}. 
+	
+	\section*{Reproducible Research}
+	All results and documents may be recreated from 
+	\url{https://github.com/magnusmunch/netren}.
+	
+	\section*{Acknowledgements}
+	\textit{Conflict of Interest}: None declared.
+	
+	\section{Computations}
+	
+	\subsection{Bayesian model}
+	\begin{align*}
+	\pi(\bbeta)& \propto \prod_{g=1}^G \[ \prod_{j \in \mathcal{G}_g} \exp \(-\lambda_1 \sqrt{\lambda'_g} |\beta_j| \) \exp \( - \frac{\lambda_2 \lambda'_g}{2} \beta_j^2 \) \] \\
+	& \,\,\,\,\, \left\{ \prod_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} \exp \( - \gamma_1 \sqrt{\gamma'_{g}} |\beta_j - \beta_k| \) \exp \[ - \frac{\gamma_2 \gamma'_{g}}{2} (\beta_j - \beta_k)^2\] \right\} \\
+	& \propto \prod_{g=1}^G \left\{ \prod_{j \in \mathcal{G}_g} \sqrt{\lambda'_g} \int_0^{\infty} t^{-\frac{1}{2}} \exp \( -\frac{\lambda_1^2 \lambda'_g}{2} t \) \exp \[ -\frac{\beta_j^2}{2} (t^{-1} + \lambda_2 \lambda'_g)  \]  dt  \right\}  \\
+	& \,\,\,\,\, \vastt\{ \prod_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} \sqrt{\gamma'_g} \int_0^{\infty} s^{-\frac{1}{2}} \exp \( -\frac{\gamma_1^2 \gamma'_g}{2} s \) \\
+	& \,\,\,\,\, \cdot \exp \[ -\frac{(\beta_j - \beta_k)^2}{2} (s^{-1} + \gamma_2 \gamma'_g)  \]  ds \vastt\},
+	\end{align*}
+	where proportionality is with respect to the $\lambda'_g$, $\gamma'_g$, and $\beta_j$. Let $\tau = 1 + \lambda_2 \lambda'_{g} t$ and $\sigma = 1 + \gamma_2 \gamma'_{g} s$, then:
+	\begin{align*}
+	\pi(\bbeta) & \propto \prod_{g=1}^G \[ \prod_{j \in \mathcal{G}_g} \lambda'_g \int_1^{\infty} (\tau - 1)^{-\frac{1}{2}} \exp \( -\frac{\lambda_1^2}{2 \lambda_2} \tau \) \exp \( -\frac{\beta_j^2}{2} \lambda_2 \lambda'_g \frac{ \tau}{\tau - 1} \) d \tau \]  \\
+	& \,\,\,\,\, \vastt\{ \prod_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} \gamma'_g \int_1^{\infty} (\sigma - 1)^{-\frac{1}{2}} \\
+	& \,\,\,\,\, \cdot \exp \( -\frac{\gamma_1^2}{2 \gamma_2} \sigma \) \exp \[ -\frac{(\beta_j - \beta_k)^2}{2} \gamma_2 \gamma'_g \frac{ \sigma}{\sigma - 1} \] d \sigma \vastt\}.
+	\end{align*}
+	Let $\bbeta_g$ denote the $\beta_j$ for which $j \in \mathcal{G}_g$. We now have a joint prior in the model parameter $\bbeta$ and the latent parameters $\btau$ and $\bsigma$:
+	\begin{align*}
+	\pi(\bbeta, \bm{\tau}, \bm{\sigma}) & \propto \prod_{g=1}^G \[ \prod_{j \in \mathcal{G}_g} \lambda'_g (\tau_j - 1)^{-\frac{1}{2}} \exp \( -\frac{\lambda_1^2}{2 \lambda_2} \tau_j \) \] \\
+	& \,\,\,\,\, \cdot \[ \prod_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} \gamma'_g (\sigma_{jk} - 1)^{-\frac{1}{2}} \exp \( -\frac{\gamma_1^2}{2 \gamma_2} \sigma_{jk} \) \] \\
+	& \,\,\,\,\, \exp \[ -\frac{1}{2} \bbeta_g \tr \(\lambda_2 \lambda'_g \tilde{\T}_g + \gamma_2 \gamma'_g \tilde{\Sm}_g \) \bbeta_g \],
+	\end{align*}
+	with $\tilde{\T}_g = \diag [\tau_j/(\tau_j - 1)]$, for $j \in \mathcal{G}_g$, and
+	$$
+	(\tilde{\Sm}_g)_{jk} = \begin{cases}
+	\sum_{\substack{l \neq j: \\ \upsilon_j \sim \upsilon_l \\ \in \mathcal{E}_g}} \sigma_{jl}/(\sigma_{jl} - 1) & \text{if } j=k, \\
+	- \sigma_{jk}/(\sigma_{jk} - 1) & \text{if } \upsilon_j \sim \upsilon_k \in \mathcal{E}_g \text{ and } j \neq k, \\
+	0 & \text{otherwise}.
+	\end{cases}
+	$$
+	
+	The conditional prior for $\bbeta$ is now easily obtained as:
+	$$
+	\bbeta | \btau, \bsigma \sim \prod_{g=1}^G \mathcal{N} \( 0, \(\lambda_2 \lambda'_g \tilde{\T}_g + \gamma_2 \gamma'_g \tilde{\Sm}_g \)^{-1} \)
+	$$
+	and the prior for $\btau,\bsigma$ as:
+	\begin{subequations}\label{eq:unnormprior}
+		\begin{align}
+		\pi(\btau,\bsigma) & \overset{D}{\propto} \prod_{g=1}^G (\lambda')^{|\mathcal{G}_g|}_g (\gamma')^{|\mathcal{E}_g|}_g |\lambda_2 \lambda'_g \tilde{\T}_g + \gamma_2 \gamma'_g \tilde{\Sm}_g|^{-1/2}\\
+		& \cdot \[ \prod_{j \in \mathcal{G}_g} (\tau_j - 1)^{-\frac{1}{2}} \exp \( -\frac{\lambda_1^2}{2 \lambda_2} \tau_j \) \] \\
+		& \cdot \[ \prod_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} (\sigma_{jk} - 1)^{-\frac{1}{2}} \exp \( -\frac{\gamma_1^2}{2 \gamma_2} \sigma_{jk} \) \].
+		\end{align}
+	\end{subequations}
+	The normalising constant is given by:
+	\begin{align}
+	h& \(\lambda_1, \lambda_2, \gamma_1, \gamma_2, \lambda'_g, \gamma'_g\) = \[ \prod_{g=1}^G (\lambda'_g)^{-|\mathcal{G}_g|} (\gamma'_g)^{-|\mathcal{E}_g|}\] \nonumber\\
+	& \,\,\,\,\, \cdot \vastt( \int_{\btau} \int_{\bsigma} \vastt\{ \prod_{g=1}^G |\lambda_2 \lambda'_g \tilde{\T}_g + \gamma_2 \gamma'_g \tilde{\Sm}_g|^{-1/2}  \[ \prod_{j \in \mathcal{G}_g} (\tau_j - 1)^{-\frac{1}{2}} \exp \( -\frac{\lambda_1^2}{2 \lambda_2} \tau_j \) \] \nonumber \\
+	& \,\,\,\,\, \cdot \[ \prod_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} (\sigma_{jk} - 1)^{-\frac{1}{2}} \exp \( -\frac{\gamma_1^2}{2 \gamma_2} \sigma_{jk} \)\]  \vastt\} d\btau d\bsigma \vastt)^{-1} \nonumber \\
+	& = \[ \prod_{g=1}^G (\lambda'_g)^{-|\mathcal{G}_g|} (\gamma'_g)^{-|\mathcal{E}_g|} \] \cdot \[ \prod_{g=1}^G (\lambda'_g)^{\frac{|\mathcal{G}_g|}{2}} \] \nonumber \\
+	& \,\,\,\,\, \cdot \vastt( \int_{\btau} \int_{\bsigma} \vastt\{ \prod_{g=1}^G \left|\lambda_2 \tilde{\T}_g + \gamma_2 \frac{\gamma'_g}{\lambda'_g} \tilde{\Sm}_g\right|^{-1/2}  \[ \prod_{j \in \mathcal{G}_g} (\tau_j - 1)^{-\frac{1}{2}} \exp \( -\frac{\lambda_1^2}{2 \lambda_2} \tau_j \) \] \nonumber \\
+	& \,\,\,\,\, \cdot \[ \prod_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} (\sigma_{jk} - 1)^{-\frac{1}{2}} \exp \( -\frac{\gamma_1^2}{2 \gamma_2} \sigma_{jk} \)\] \vastt\} d\btau d\bsigma \vastt)^{-1} \nonumber \\
+	& = \[ \prod_{g=1}^G (\lambda'_g)^{-\frac{|\mathcal{G}_g|}{2}} (\gamma'_g)^{-|\mathcal{E}_g|} \] \cdot c \(\lambda_1, \lambda_2, \gamma_1, \gamma_2, \frac{\gamma'_g}{\lambda'_g}\). \label{eq:normconst}
+	\end{align}
+	By plugging this expression into the unnormalised prior expression in (\ref{eq:unnormprior}), we obtain the prior model as in (\ref{eq:tsprior1}) - (\ref{eq:tsprior3}).
+	
+	\subsection{Variational Bayes}
+	For the derivation of $q_{\bomega}^*(\bomega)$ we refer the reader to \cite{munch_adaptive_2018}. The rest of the derivations for the variational posterior are given below. To that end, let $\psi_j = \tau_j - 1$ and $\chi_{jk} = \sigma_{jk} - 1$. Furthermore, in the following, $\diag(\A_g)$, for some square matrix $\A$, with diagonal matrix with as diagonal blocks the matrices $\A_g$. Now:
+	\begin{align*}
+	q^*_{\bbeta}(\bbeta) & \propto \exp \left\{\log \L (\y | \bbeta) + \E_{\bomega} [\log \pi(\bomega | \bbeta)] + \E_{\btau, \mathbf{\sigma}} [\log \pi (\bbeta, \btau, \bm{\sigma})] \right\} \\
+	& \overset{D} = \mathcal{N} (\bmu, \bSigma), \\
+	q^*_{\bpsi}(\bpsi) & \propto \exp \{ \E_{\bbeta, \bm{\sigma}} [\log \pi (\bbeta, \btau, \bm{\sigma})]\} \\
+	& \propto \vast\{ \prod_{g=1}^G \[ \prod_{j \in \mathcal{G}_g} (\tau_j - 1)^{-1/2} \exp \( -\frac{\lambda_1^2}{2 \lambda_2} \tau_j \) \] \\
+	& \,\,\,\,\, \cdot \exp \[ -\frac{1}{2} \lambda_2 \lambda'_g \E_Q \( \bbeta_g \tr \tilde{\T}_g \bbeta_g\) \] \vast\} \\
+	& = \prod_{g=1}^G \prod_{j \in \mathcal{G}_g} (\tau_j - 1)^{-1/2} \exp \[ -\frac{\lambda_1^2}{2 \lambda_2} \tau_j - \frac{\lambda_2 \lambda'_{g}}{2} \E_Q(\beta_j^2) \frac{\tau_j}{\tau_j - 1} \]\\
+	& \propto \prod_{g=1}^G \prod_{j \in \mathcal{G}_g} \psi_j^{-1/2} \exp \( -\frac{1}{2} \left\{ \frac{\lambda_1^2}{\lambda_2} \psi_j + \frac{\lambda_2 \lambda'_{g(j)} [ \V_Q(\beta_j) + \E_Q(\beta_j)^2]}{\psi_j} \right\} \) \\
+	& \overset{D} = \prod_{g=1}^G \prod_{j \in \mathcal{G}_g} \mathcal{GIG} \(\frac{1}{2}, \frac{\lambda_1^2}{\lambda_2}, \eta_j\), \\
+	q^*_{\bchi}(\bchi) & \propto \exp \{ \E_{\bbeta, \btau} [\log \pi (\bbeta, \btau, \bm{\sigma})]\} \\
+	& \propto \vastt\{ \prod_{g=1}^G \[ \prod_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} (\sigma_{jk} - 1)^{-1/2} \exp \( - \frac{\gamma_1^2}{2 \gamma_2} \sigma_{jk} \) \] \\
+	& \,\,\,\,\, \cdot \exp \[ -\frac{1}{2} \gamma_2 \gamma'_g \E_Q \( \bbeta_k \tr \tilde{\Sm}_g \bbeta_g \) \] \vastt\} \\
+	& = \vastt( \prod_{g=1}^G \prod_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} (\sigma_{jk} - 1)^{-1/2} \\
+	& \,\,\,\,\, \cdot \exp \left\{ - \frac{\gamma_1^2}{2 \gamma_2} \sigma_{jk} - \frac{\gamma_2 \gamma'_g}{2} \E_Q \[(\beta_j - \beta_k)^2\] \frac{\sigma_{jk}}{\sigma_{jk} - 1} \right\} \vastt) \\
+	& \propto \prod_{g=1}^G \prod_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} \chi_{jk}^{-1/2} \exp \( - \frac{1}{2} \left\{ \frac{\gamma_1^2}{\gamma_2} \sigma_{jk} + \frac{\gamma_2 \gamma'_{g(jk)} \E_Q[(\beta_j - \beta_k)^2] }{\chi_{jk}} \right\} \) \\
+	& \overset{D} = \prod_{g=1}^G \prod_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} \mathcal{GIG} \(\frac{1}{2}, \frac{\gamma_1^2}{\gamma_2}, \zeta_{jk}\),
+	\end{align*}
+	with the following parameters:
+	\begin{subequations}\label{eq:varbayespar}
+		\begin{align}
+		\bSigma & = \left\{\X \tr \diag [\E_Q (\omega_i)] \X + \lambda_2 \diag [\lambda'_g \E_Q (\tilde{\T}_g)] + \gamma_2 \diag [\gamma'_g \E_Q ( \tilde{\Sm}_g)] \right\}^{-1}, \label{eq:Svarbayes}\\
+		\bmu & = \bSigma \X \tr \(\y - \frac{1}{2} \m \), \\
+		c_i & = \sqrt{\x_i \tr \V_Q(\bbeta) \x_i + [\x_i \tr \E_Q(\bbeta)]^2}, \label{eq:cvarbayes}\\
+		\eta_j & = \lambda_2 \lambda'_{g(j)} [\V_Q(\beta_j) + \E_Q(\beta_j)^2], \\
+		\zeta_{jk} & = \gamma_2 \gamma'_{g(jk)} [\E_Q (\beta_j)^2 + \E_Q (\beta_k)^2 - 2 \E_Q(\beta_j) \E_Q(\beta_k) \\
+		& \,\,\,\,\, + \V_Q(\beta_j) + \V_Q(\beta_k) - 2 \Cov_Q (\beta_j,\beta_k) ]. \label{eq:zvarbayes}
+		\end{align}
+	\end{subequations}
+	
+	The derivation for $\E_Q(\omega_i) = m_i \tanh(c_i/2)/(2ci_i)$ in (\ref{eq:Svarbayes}) given in \cite{munch_adaptive_2018}. The other two expectations in (\ref{eq:Svarbayes}) are calculated as follows:
+	\begin{align*}
+	\E_Q(\tilde{\T}_g) & = \diag \[ \E_Q \( \frac{\tau_{j(g)}}{\tau_{j(g)} - 1} \) \] = \I + \diag \[ \E_Q(\psi_{j(g)}^{-1}) \] \\
+	& = \I + \diag \[ \frac{\lambda_1}{\sqrt{\lambda \eta_{j(g)}}} \], \\
+	\E_Q(\tilde{\Sm}_g) & = \begin{cases}
+	\sum_{\substack{l \neq j: \\ \upsilon_j \sim \upsilon_l \\ \in \mathcal{E}_g}} \E_Q[\sigma_{jl}/(\sigma_{jl} - 1] & \text{if } j=k, \\
+	- \E_Q[\sigma_{jk}/(\sigma_{jk} - 1)] & \text{if } \upsilon_j \sim \upsilon_k \in \mathcal{E}_g \text{ and } j \neq k, \\
+	0 & \text{otherwise}
+	\end{cases} \\
+	& = \begin{cases}
+	\sum_{\substack{l \neq j: \\ \upsilon_j \sim \upsilon_l \\ \in \mathcal{E}_g}} \[1 + \E_Q(\chi_{jl}^{-1})\] & \text{if } j=k, \\
+	- 1 - \E_Q(\chi_{jl}^{-1}) & \text{if } \upsilon_j \sim \upsilon_k \in \mathcal{E}_g \text{ and } j \neq k, \\
+	0 & \text{otherwise}
+	\end{cases} \\
+	& = \begin{cases}
+	\text{deg}_j + \sum_{\substack{l \neq j: \\ \upsilon_j \sim \upsilon_l \\ \in \mathcal{E}_g}} \gamma_1(\gamma_2 \zeta_{jl})^{-1/2} & \text{if } j=k, \\
+	- 1 - \gamma_1(\gamma_2 \zeta_{jk})^{-1/2} & \text{if } \upsilon_j \sim \upsilon_k \in \mathcal{E}_g \text{ and } j \neq k, \\
+	0 & \text{otherwise}
+	\end{cases} \\
+	& = \Lm + \frac{\gamma_1}{\sqrt{\gamma_2}} \tilde{\Z}_g,
+	\end{align*}
+	where $\text{deg}_j$ denotes the degree of vertex $\upsilon_j$. The Gaussian expectations, variances, and covariances in (\ref{eq:cvarbayes}) to (\ref{eq:zvarbayes}) are trivial and therefore omitted. Plugging these derivations into (\ref{eq:varbayespar}) leads to the estimating equations in (\ref{eq:estequations}).
+	
+	\subsection{Approximate empirical-variational Bayes}\label{sec:apprempvarbayes}
+	We may ignore the prior dependency of $\btau, \bsigma$ to ease the empirical Bayes computations. To this end we lower bound the determinant in the integrand of the normalising constant: $|\lambda_2 \lambda'_g \tilde{\T}_g + \gamma_2 \gamma'_g \tilde{\Sm}_g| \geq |\lambda_2 \lambda'_g \tilde{\T}_g| + |\gamma_2 \gamma'_g \diag(\tilde{\Sm}_g)|$, such the that the normalising constant is equivalent to (\ref{eq:normconst}), except that now $c (\lambda_1, \lambda_2, \gamma_1, \gamma_2, \gamma'_g / \lambda'_g ) = c (\lambda_1, \lambda_2, \gamma_1, \gamma_2)$.
+	Because the integrand is non-negative for $\lambda_1, \lambda_2, \gamma_1, \gamma_2, \lambda'_g, \gamma'_g > 0$, this implicitly lower bounds the normalising constant and, as a consequence, the marginal likelihood. The estimating equation for $\blambda', \bgamma'$ is now:
+	\begin{align*}
+	\blambda'^{(k+1)},\bgamma'^{(k+1)} & = \underset{\blambda',\bgamma'}{\argmax} \sum_{g=1}^G \frac{|\mathcal{G}_g|}{2} \log \lambda'_g - \frac{\lambda_2}{2} \sum_{g=1}^G \lambda'_g d_g^{(k)} - \frac{\gamma_2}{2} \sum_{g=1}^G \gamma'_g  h_g^{(k)}.
+	\end{align*}
+	To ensure that overall penalisation is determined by the global penalty parameters $\lambda_1,\lambda_2, \gamma_1, \gamma_2$, we require additional constraints to hold:
+	\begin{align*}
+	\prod_{g=1}^G(\lambda'_g)^{|\mathcal{G}_g|}=1 \text{ and } \prod_{g=1}^G(\gamma'_g)^{|\mathcal{E}_g|}=1.
+	\end{align*}
+	
+	Under this constraint we can solve for $\bgamma'_g$ directly:
+	$$
+	\gamma'^{(k+1)}_g = \exp \[ \frac{\sum_{g=1}^G |\mathcal{E}_g| \(\log h_g^{(k)} - \log |\mathcal{E}_g|\)}{\sum_{g=1}^G |\mathcal{E}_g|} \] \cdot \frac{|\mathcal{E}_g|}{h_g^{(k)}},
+	$$
+	while we numerically solve the following convex problem:
+	\begin{align*}
+	\blambda'^{(k+1)} & = \underset{\blambda'}{\argmax} \sum_{g=1}^G \frac{|\mathcal{G}_g|}{2}  \log (\lambda'_g) - \frac{\lambda_2}{2} \sum_{g=1}^G \lambda'_g d^{(k)}_g \\
+	& \text{subject to } \prod_{g=1}^G (\lambda'_g)^{|\G(g)|} = 1.
+	\end{align*}
+	
+	\subsection{Frequentist generalized elastic net}
+	Let $\Lm = \Sm \Sm \tr$, $\y^* = \begin{bmatrix} \y \tr & \0_{1 \times 2p} \end{bmatrix} \tr$, $\X^* = \begin{bmatrix} \X \tr & \sqrt{\lambda_2} \I_{p \times p} & \sqrt{\gamma_2} \Sm_{p \times  |\mathcal{E}|}\end{bmatrix} \tr$, and $\D = \begin{bmatrix} \I_{p \times p} & (\gamma_1/\lambda_1) \Lm \end{bmatrix} \tr$, then (ignoring a trivial extension to pathway-specific penalty parameters) the solution to the generalized lasso problem:
+	$$
+	\hat{\bbeta} = \underset{\bbeta}{\argmax} \ell(\y^* | \X^*, \bbeta) - \lambda_1 \norm{\D \bbeta}_1
+	$$
+	gives the solution to the generalized elastic net problem in (\ref{eq:penlik}).
+	
+	\section{Linear regression and alternative formulation}
+	Let $y_{i}$, for $i=1, \dots, n$, denote continuous outcomes with $\x_i$ the
+	corresponding $p$-dimensional feature vectors. Furthermore, let 
+	$\bm{y} = \begin{bmatrix} y_1 & \cdots & y_n \end{bmatrix} \tr$ and 
+	$\X = \begin{bmatrix} \x_1 & \cdots & \x_n \end{bmatrix} \tr$. Throughout
+	the following, we assume that the $y_i$ are centred and the $\x_{ij}$
+	are standardised per feature, i.e., $\sum_{i=1}^n y_i =0$,
+	$\forall j: \sum_{i=1}^n x_{ij} =0$, and 
+	$\forall j: \sum_{i=1}^n x_{ij}^2 =0$. We consider the following Bayesian
+	linear regression model:
+	\begin{subequations}\label{eq:bayesmodel}
+  	\begin{align}
+  	  y_i | \bbeta, \sigma^2 & \sim \mathcal{N} \( \x_i \tr \bbeta, \sigma^2 \),
+  	  \\
+  	  \bbeta | \sigma^2, \bm{\psi}, \bm{\chi} & \sim \mathcal{N} \( 0,
+  	  \sigma^2 \[ \lambda_2 \bm{\Lambda}' +
+  	  \gamma_2 \sum_{g=1}^G \gamma_g' \mathbf{L}_g +
+  	  \lambda_2 \bm{\Lambda}' \diag \( \psi_j \) +
+  	  \gamma_2 \sum_{g=1}^G \gamma_g' \mathbf{L}^{\chi}_g \]^{-1} \), \\
+  	  \bm{\psi}, \bm{\chi} & \overset{D}{=} \det \[ \lambda_2 \bm{\Lambda}' +
+  	  \gamma_2 \sum_{g=1}^G \gamma_g' \mathbf{L}_g +
+  	  \lambda_2 \bm{\Lambda}' \diag \( \psi_j \) +
+  	  \gamma_2 \sum_{g=1}^G \gamma_g' \mathbf{L}^{\chi}_g \]^{-1/2} \\
+  	  & \cdot \[ \prod_{j=1}^p \psi_{j}^{-1/2} \exp \(- \frac{\lambda_1^2}
+  	  {2\lambda_2}
+  	  \psi^{-1}\) \] \cdot \[ \prod_{\substack{\upsilon_j \sim
+  	  \upsilon_l \\ \in \mathcal{E}}} \chi_{jk}^{-1/2}
+  	  \exp \( - \frac{\gamma_1^2}{2 \gamma_2} \chi_{jk}^{-1} \)\] \\
+  	  & \cdot \[ \prod_{g=1}^G (\lambda_g')^{\frac{|\mathcal{G}_g|}{2}}
+  	  c \(\lambda_1, \lambda_2, \gamma_1, \gamma_2, \gamma_g'/\lambda_g' \)\]
+  	  \cdot \[ \prod_{\substack{\upsilon_j \sim
+  	  \upsilon_l \\ \in \mathcal{E}}}
+  	  \mathbbm{1} \{\psi_j, \chi_{jk} > 0 \} \], \\
+  	  \sigma^2 & \sim 1/\sigma^3,
+  	\end{align}
+	\end{subequations}
+	where $\bm{\Lambda}'=\diag(\lambda_{g(j)}')$, and 
+	$(\mathbf{L}_g)_{p \times p}$ and 
+	$(\mathbf{L}^{\chi}_g)_{p \times p}$ denote the graph Laplacian
+	and weighted graph Laplacian of pathway $g$, respectively, with weights
+	$\chi_{jk}$ such that:
+	$$
+	(\mathbf{L}^{\chi}_g)_{jk} = 
+	\begin{cases}
+	  \sum_{\substack{l \neq j: \\ \upsilon_j \sim \upsilon_l \\ 
+	  \in \mathcal{E}_g}} \chi_{jl} & \text{if } j=k, \\
+	  - \chi_{jk} & \text{if } \upsilon_j \sim \upsilon_k \in \mathcal{E}_g, \\
+	  0 & \text{otherwise}.
+	\end{cases}
+	$$
+	
+	The MAP estimator of model (\ref{eq:bayesmodel}) corresponds to the following 
+	penalized regression estimator:
+  \begin{subequations}\label{eq:penmodel}
+		\begin{align}
+		  \hat{\bbeta} & := \underset{\bbeta}{\argmax} \ell(\y ; \bbeta) -
+		  \lambda_1 \sum_{g=1}^G \sqrt{\lambda'_g} 
+		  \sum_{j \in \mathcal{G}_g}  |\beta_j| - \frac{\lambda_2}{2} 
+		  \sum_{g=1}^G \lambda'_g \sum_{j \in \mathcal{G}_g}  \beta_j^2 \\
+		  & \,\,\,\, - \gamma_1 \sum_{g=1}^G \sqrt{\gamma'_g} 
+		  \sum_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} 
+		  |\beta_j - \beta_k| - \frac{\gamma_2}{2} 
+		  \sum_{g=1}^G \gamma'_g 
+		  \sum_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} 
+		  (\beta_j - \beta_k)^2,
+		\end{align}
+	\end{subequations}
+	
+	\bibliographystyle{author_short3} 
+	\bibliography{refs}
+	
+	\section*{Session info}
+
+<<r session-info, eval=TRUE, echo=TRUE, tidy=TRUE>>=
+devtools::session_info()
+@
+
+\end{document}

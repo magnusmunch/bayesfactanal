@@ -1,3 +1,190 @@
+### testing FusedLasso
+library(FusedLasso)
+library(glmnet)
+library(mvtnorm)
+
+family="binomial"
+nlambda=10
+addIntercept=FALSE
+seed=NULL
+lambda1=NULL
+lambda2=NULL
+exp.grid=TRUE
+nfolds=10
+foldid=NULL
+trace=FALSE
+lambda.min.ratio=ifelse(nrow(x) < ncol(x), 0.01, 1e-04)
+cv.fusedlasso <- function(x, y, graph, family, lambda1=NULL, lambda2=NULL, 
+                          nlambda=100, exp.grid=TRUE, addIntercept=TRUE, 
+                          nfolds=10, foldid=NULL, seed=NULL, trace=FALSE, 
+                          lambda.min.ratio=ifelse(nrow(x) < ncol(x), 0.01, 
+                                                  1e-04)) {
+  
+  if(is.null(lambda1) | is.null(lambda2)) {
+    invisible(capture.output(
+      fit <- fusedlassoMaxLambdas(x, y, family=family, graph=graph, 
+                                  addIntercept=addIntercept)))
+    lim.lambda1 <- c(fit$maxLambda1, lambda.min.ratio*fit$maxLambda1)
+    lim.lambda2 <- c(fit$maxLambda2, lambda.min.ratio*fit$maxLambda2)
+    if(is.null(lambda1)) {
+      if(!is.null(lambda2) & length(lambda2)!=1) {
+        lambda1 <- exp(seq(log(lim.lambda1[1]), log(lim.lambda1[2]), 
+                           length.out=length(lambda2)))
+      } else {
+        lambda1 <- exp(seq(log(lim.lambda1[1]), log(lim.lambda1[2]), 
+                           length.out=nlambda))
+      }
+    }
+    if(is.null(lambda2)) {
+      if(!is.null(lambda1) & length(lambda1)!=1) {
+        lambda2 <- exp(seq(log(lim.lambda2[1]), log(lim.lambda2[2]), 
+                           length.out=length(lambda1)))
+      } else {
+        lambda2 <- exp(seq(log(lim.lambda2[1]), log(lim.lambda2[2]), 
+                           length.out=nlambda))
+      }
+    }
+  }
+  if(exp.grid) {
+    grid <- expand.grid(lambda1=lambda1, lambda2=lambda2)
+    seq.lambda1 <- grid$lambda1
+    seq.lambda2 <- grid$lambda2
+  }
+  
+  n <- nrow(x)
+  p <- ncol(x)
+  if(is.null(foldid)) {
+    if(is.null(seed)) {
+      seed <- Sys.time()
+    }
+    set.seed(seed)
+    if(is.null(nfolds)) {
+      nfolds <- n
+    }
+    remainder <- n %% nfolds
+    if(remainder==0) {
+      foldid <- rep(1:nfolds, each=n/nfolds)
+    } else {
+      foldid <- c(rep(1:remainder, each=n %/% nfolds + 1),
+                  rep((remainder + 1):nfolds, each=n %/% nfolds))
+    }
+    foldid <- sample(foldid)
+  }
+  
+  cvl <- matrix(NA, nrow=nfolds, ncol=length(lambda1)*length(lambda1))
+  for(fold in 1:nfolds) {
+    if(trace) {
+      cat("\r", "fold ", fold, sep="")
+    }
+    xtrain <- as.matrix(x[foldid!=fold, ], ncol=p)
+    xtest <- as.matrix(x[foldid==fold, ], ncol=p)
+    ytrain <- y[foldid!=fold]
+    ytest <- y[foldid==fold]
+    for(l2 in 1:length(lambda2)) {
+      invisible(capture.output(
+        fit <- fusedlasso(xtrain, ytrain, lambda1=lambda1, lambda2=lambda2[l2], 
+                          family=family, graph=graph, addIntercept=addIntercept,
+                          verbose=FALSE)))
+      
+      best <- as.matrix(rbind(fit$Intercept[1:ncol(fit$beta)], fit$beta))
+      lpred <- cbind(1, xtest) %*% best
+      if(family=="gaussian") {
+        cvl[fold, ((l2 - 1)*length(lambda1) + 1):((l2 - 1)*length(lambda1) + 
+                                                    length(fit$lambda1))] <-  
+          0.5*colSums((ytest - lpred)^2)
+      } else if(family=="binomial") {
+        cvl[fold, ((l2 - 1)*length(lambda1) + 1):((l2 - 1)*length(lambda1) + 
+                                                    length(fit$lambda1))] <- 
+          -colSums(ytest*lpred - log(1 + exp(lpred)))
+      }
+    }
+  }
+  cvm <- colMeans(cvl, na.rm=TRUE)
+  cvsd <- apply(cvl, 2, sd, na.rm=TRUE)
+  lambda.min <- c(seq.lambda1[which.min(cvm)], seq.lambda2[which.min(cvm)])
+  fit.list <- lapply(1:length(lambda2), function(l2) {
+    invisible(capture.output(
+      fit <- fusedlasso(x, y, lambda1=lambda1, lambda2=lambda2[l2], 
+                        family=family, graph=graph, addIntercept=addIntercept, 
+                        verbose=FALSE))); return(fit)})
+  
+  fit <- list(beta=Reduce("cbind", lapply(fit.list, "[[", "beta")), 
+              success=unlist(sapply(fit.list, "[[", "success")), 
+              lambda1=unlist(sapply(fit.list, "[[", "lambda1")), 
+              lambda2=unlist(sapply(fit.list, "[[", "lambda2")),
+              outerIterNum=unlist(sapply(fit.list, "[[", "outerIterNum")), 
+              innerIterNum=unlist(sapply(fit.list, "[[", "innerIterNum")),
+              family=family, 
+              Intercept=unlist(sapply(1:length(fit.list), function(l) {
+                fit.list[[l]]$Intercept[1:length(fit.list[[l]]$lambda1)]})), 
+              maxLambda1=lim.lambda1[1],
+              maxLambda2=lim.lambda2[1])
+  class(fit) <- "fusedlasso"
+  
+  nzero <- colSums(fit$beta!=0) + as.numeric(fit$Intercept!=0)
+  
+  out <- list(lambda1=fit$lambda1, lambda2=fit$lambda2, cvm=cvm, cvsd=cvsd, 
+              nzero=nzero, fit=fit, lambda.min=lambda.min)
+  return(out)
+  
+}
+
+
+# set.seed(2019)
+n <- 200
+p <- 100
+G <- 2
+ne <- choose(p, 2)/5
+A <- matrix(0, p, p)
+A[upper.tri(A)] <- sample(rep(c(1, 0), times=c(ne, p*(p-1)/2 - ne)))
+A[lower.tri(A)] = t(A)[lower.tri(A)]
+graph <- list(apply(A, 1, function(a) {which(a!=0)}), 
+              apply(A, 1, function(a) {rep(1, sum(a))}))
+rho <- 0.4
+Sigma <- A*rho
+diag(Sigma) <- rowSums(Sigma) + 1
+Sigma <- cov2cor(Sigma)
+beta <- rmvnorm(1, rep(0, p), Sigma)
+x <- matrix(rnorm(n*p), nrow=n, ncol=p)
+lpred <- as.numeric(x %*% t(beta))
+y <- rbinom(n, 1, exp(lpred)/(1 + exp(lpred)))
+
+fit.fusedlasso1 <- cv.fusedlasso(x, y, graph, family="binomial", 
+                                 nlambda=10, addIntercept=FALSE, seed=NULL)
+fit.lasso1 <- cv.glmnet(x, y, family="binomial", alpha=1, intercept=FALSE,
+                        standardize=FALSE)
+fit.ridge1 <- cv.glmnet(x, y, family="binomial", alpha=0, intercept=FALSE,
+                        standardize=FALSE)
+
+best.fusedlasso1 <- fit.fusedlasso1$fit$beta[, which(
+  fit.fusedlasso1$lambda1==fit.fusedlasso1$lambda.min[1] &
+    fit.fusedlasso1$lambda2==fit.fusedlasso1$lambda.min[2])]
+best.lasso1 <- as.numeric(coef(fit.lasso1, s="lambda.min"))[-1]
+best.ridge1 <- as.numeric(coef(fit.ridge1, s="lambda.min"))[-1]
+
+nzero.fusedlasso1 <- fit.fusedlasso1$nzero[which(
+  fit.fusedlasso1$lambda1==fit.fusedlasso1$lambda.min[1] &
+    fit.fusedlasso1$lambda2==fit.fusedlasso1$lambda.min[2])]
+nzero.lasso1 <- unname(fit.lasso1$nzero[which(
+  fit.lasso1$lambda==fit.lasso1$lambda.min)])
+nzero.ridge1 <- unname(fit.ridge1$nzero[which(
+  fit.ridge1$lambda==fit.ridge1$lambda.min)])
+
+nzero <- c(fusedlasso1=nzero.fusedlasso1, lasso1=nzero.lasso1, 
+           ridge1=nzero.ridge1)
+emse <- c(fusedlasso1=mean((beta - best.fusedlasso1)^2), 
+          lasso1=mean((beta - best.lasso1)^2),
+          ridge1=mean((beta - best.ridge1)^2))
+cbind(nzero, emse)
+
+plot(beta, best.fusedlasso1)
+plot(beta, best.lasso1)
+plot(beta, best.ridge1)
+
+fit.fusedlasso1$lambda.min
+fit.lasso1$lambda.min*n
+
+
 #### variational bayes posterior linear regression with inverse gamma prior
 n <- 100
 p <- 10
@@ -300,6 +487,16 @@ plot(beta, res$mu)
 
 heatmap(res$sigma, Rowv=NA, Colv=NA, revC=TRUE, labRow=FALSE, labCol=FALSE)
 hist(res$psi[lower.tri(res$psi)])
+
+f <- function(x, c1, c2, c3) {
+  exp(-c1*abs(x) - c2*x^2 + c3*x)
+    
+}
+c1 <- rchisq(1, 1)
+c2 <- rchisq(1, 1)
+c3 <- rchisq(1, 1)
+curve(f(x, 100, c2, c3), from=-10, to=10, n=1000)
+
 
 
 
