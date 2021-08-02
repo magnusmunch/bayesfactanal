@@ -17,7 +17,8 @@ read_chunk("code/figures.R")
 \usepackage{bm,amsmath,amssymb,amsthm,amsfonts,graphics,graphicx,epsfig,
 rotating,caption,subcaption,natbib,appendix,titlesec,multicol,hyperref,verbatim,
 bbm,algorithm,algpseudocode,pgfplotstable,threeparttable,booktabs,mathtools,
-dsfont,parskip,xr}
+dsfont,parskip,xr,enumerate,multirow,tikz,arydshln}
+\usetikzlibrary{matrix, fit, backgrounds}
 \externaldocument[sm-]{supplement}
 
 % vectors and matrices
@@ -120,434 +121,1102 @@ dsfont,parskip,xr}
 \newcommand{\vastt}{\bBigg@{4}}
 \newcommand{\Vast}{\bBigg@{5}}
 \makeatother
+\newcommand{\hl}[2]{
+\begin{scope}[on background layer]
+    \node [fit={#1}, fill=#2,inner sep=-1pt] {};
+\end{scope}}
 
 % settings
 \pgfplotsset{compat=1.16}
 \graphicspath{{../figs/}}
 \setlength{\evensidemargin}{.5cm} \setlength{\oddsidemargin}{.5cm}
 \setlength{\textwidth}{15cm}
-\title{Empirical Bayes network-regularized elastic net regression}
+\title{Semi-supervised empirical Bayes group-regularized factor regression}
 \date{\today}
 \author{Magnus M. M\"unch$^{1,2}$\footnote{Correspondence to: 
-\href{mailto:m.munch@amsterdamumc.nl}{m.munch@vumc.nl}}, Mark A. van de 
-Wiel$^{1,3}$, \\ Aad W. van der Vaart$^{2}$, and Carel F.W. Peeters$^{1}$}
+\href{mailto:m.munch@amsterdamumc.nl}{m.munch@amsterdamumc.nl}}, Mark A. van de 
+Wiel$^{1,3}$, \\ Aad W. van der Vaart$^{2}$, and Carel F.W. Peeters$^{1,4}$}
 
 \begin{document}
 
 	\maketitle
 	
 	\noindent
-	1. Department of Epidemiology \& Biostatistics, Amsterdam UMC, VU University, 
+	1. Department of Epidemiology \& Data Science, Amsterdam UMC, VU University, 
 	PO Box 7057, 1007 MB Amsterdam, The Netherlands \\
 	2. Mathematical Institute, Leiden University, Leiden, The Netherlands \\
 	3. MRC Biostatistics Unit, Cambridge Institute of Public Health, Cambridge,
-	United Kingdom
+	United Kingdom \\
+	4. Division of Mathematical \& Statistical Methods - Biometris, 
+	Wageningen University \& Research, Wageningen, The Netherlands
 	
 	\begin{abstract}
-		{...}
+		{
+		The features in high dimensional biomedical prediction problems are often
+		well described with lower dimensional manifolds. An example is
+		genes that are organised in smaller functional networks. The outcome can 
+		then be
+		described with the factor regression model. A
+		benefit of the factor model is that is allows for straightforward inclusion
+		of unlabeled observations
+		in the estimation of the model, i.e., semi-supervised learning.
+		In addition, the high dimensional features in biomedical prediction problems
+		are often well characterised. Examples are genes, for which annotation is
+		available, and metabolites with $p$-values from a previous study available.
+		In this paper, the extra information on the features is included in the 
+		prior model for the features. 
+		The extra information is weighted and included in the estimation
+		through empirical Bayes, with Variational approximations to speed up the
+		computation.
+		The method is demonstrated in simulations and two applications.
+		One application considers influenza vaccine 
+		efficacy prediction based on microarray data. The second application
+		predictions oral cancer metastatsis from RNAseq data.
+		}
 	\end{abstract}
 	
-	\noindent\textbf{Keywords}: Empirical Bayes; High-dimensional data; 
-	Prediction; Network
+	\noindent\textbf{Keywords}: Empirical Bayes; Factor regression; 
+	High-dimensional data; Semi-supervised learning  
 	
 	\noindent\textbf{Software available from}: 
-	\url{https://github.com/magnusmunch/netren}
+	\url{https://github.com/magnusmunch/bayesfactanal}
 	
 	\section{Introduction}
-	\subsection{Problem statement}
-	Classification models based on omics data are ubiquitous in clinical practice 
-	nowadays. Examples of the application of such models are disease risk 
-	prediction, treatment response prediction, prognostics, treatment selection, 
-	and disease diagnosis. Selecting a small and manageable subset of omics 
-	features, while retaining classification performance, is paramount to the 
-	practical implementation of such models. 
-
-	Estimation of such classification models is impeded by the high dimensional 
-	character of omics data, i.e. $p > n$, with $p$ and $n$ the number of features
-	and samples, respectively. High dimensionality causes problems with the 
-	identifiability of standard statistical models and requires computationally
-	efficient model estimation. Another characteristic of omics data is the 
-	availability of extra information on the features. One abundant source of such
-	information is the collection of biologically verified molecular pathways 
-	published in online repositories, such as KEGG \cite[]{kanehisa_kegg:_2000}.
-	Inclusion of such pathway information into the estimation of classification 
-	models has been empirically shown to enhance predictive performance and/or 
-	interpretability \cite[]{kim_network-based_2013, pan_incorporating_2010, 
-	li_variable_2010, binder_incorporating_2009, wei_nonparametric_2007}. 
-
-	Biologically, it may be expected that features with adjacent vertices in a 
-	network have a similar effect on the outcome of a classification model. 
-	Therefore, most network-based prediction methods use some form of penalisation
-	based on the graph Laplacian. The Laplacian induces a penalty on the 
-	difference between the model parameters of neighbouring vertices to ensure 
-	similar effect sizes for neighbouring vertices. If the chosen penalty is the
-	$L_1$-norm we end op with a generalisation of the fused lasso 
-	\cite[]{tibshirani_sparsity_2005}. Similarly, the $L_2$-norm leads to a 
-	generalised fused ridge regression.
+	In modern biomedical research, there is an interest in 
+	prediction models based on large sets of omics features. Common 
+	outcomes are, for example, categorical disease status, 
+	time-to-event, or continuous anthropomorphic measures.
 	
-	\subsection{Related work}
-	Graph-based sparse linear discriminant analysis for high-dimensional 
-	classification (2018) by Jianyu Liu and Guan Yu and Yufeng Liu.
+	In many omics studies, the number of omics features considered is large
+	and may run in the tens of thousands (in, e.g., genomics). At the same time,
+	the number of samples is generally low, commonly due to 
+	high measurement costs, logistics, or the availability of subjects. 
+	The high-dimensionality of 
+	data (i.e., $p > n$) complicates model estimation.
+	On the other hand, extra unlabeled omics data is often available.
+	Here, `unlabeled' refers to data for which the predictor features are
+	available, but not the study response/outcome.
+	Unlabeled data may, for example, come from online repositories or 
+	previous studies with the same set of features, but a different response.
+	Inclusion of unlabeled data in prediction problems, termed semi-supervised
+	learning in the machine learning community, has received plenty of attention
+	\cite[see][for an introduction]{zhu_introduction_2009}.
 	
-	li en li (2008): lasso penalty met fused ridge op basis van network 
-	Laplacian
+	Several authors have argued that the high-dimensional feature space in omics 
+	data arises from noisy observations on a lower dimensional latent space. 
+	\cite{bernardo_bayesian_2003} show that gene 
+	expression data from breast cancer patients are indeed well described with a
+	lower dimensional (linear) latent space.
+	Moreover, \cite{carvalho_high-dimensional_2008} improve prediction of 
+	mutant p53 gene versus wild type in breast cancer patients with the lower
+	dimensional structure of the gene expression data. 
+	\cite{bernardo_bayesian_2003} and \cite{carvalho_high-dimensional_2008} use
+	a Bayesian linear factor (regression) model approach to describe the latent 
+	space. \cite{mes_outcome_2020} is an example of a frequentist
+	latent space approach (technically a hybrid between Bayes and frequentist) to
+	prediction from radiomics features.
 	
-	Binder en Schumacher (2009): componentwise boosting with L1-norm penalty. 
-	After every time a feature is included during boosting step, the penalty 
-	parameter for the	feature is increased, while the penalty parameter for 
-	connected features is	reduced.
+	Inclusion of unlabeled data into the estimation of
+	linear factor models may benefit estimation 
+	\cite[]{liu_maximum_1998,banbura_maximum_2014}. Here, we extend the estimation
+	of a Bayesian factor regression model to include unlabeled data to improve 
+	prediction from a high-dimensional feature space. We treat the
+	unlabeled data as data with a missing response and consider the full 
+	likelihood approach, together with a Bayesian prior. 
 	
-	Peterson, Stingo, and vanucci (2016): model wat Carel voorstelde 
-	(Li \& Zhang (2010) en 	stingo, chen, tadesse \& vannucci (2011) zijn ook 
-	vergelijkbaar)
-
-	\section{Model}
-	\subsection{Logistic regression}
-	In logistic regression the outcome variables are assumed to be binary or sums
-	of $m_i$ disjoint binary Bernoulli trials ($y_i = \sum_{l=1}^{m_i} k_l, k_l 
-	\in \{0,1\}$ for $i=1, \dots, n$). The binomial logistic model relates the 
-	responses to the $p$-dimensional covariate vectors $\x_i = \begin{bmatrix} 
-	x_{i1} & \cdots & x_{ip}\end{bmatrix} \tr$ through $y_i \sim \mathcal{B} 
-	\( m_i, \expit ( \x_i\tr \bbeta ) \)$, where $\mathcal{B} (m,\upsilon)$ is 
-	the binomial distribution with number of trials $m$ and probability 
-	$\upsilon$, and $\expit \( \x_i\tr \bbeta \) = \exp(\x\tr_i \bbeta)/
-	[1 + \exp(\x\tr_i \bbeta)]$. Note that if $m_i=1$ for $i=1, \dots, n$, the 
-	model reduces to a binary logistic regression model. Throughout the rest of
-	the paper we assume that the model matrix $\X = \begin{bmatrix} \x_1 & 
-	\cdots & \x_n \end{bmatrix}\tr$ is standardized such that 
-	$\frac{1}{n}\sum_{i=1}^n x_{ij}=0$ and $\frac{1}{n}\sum_{i=1}^n x_{ij}^2=1$ 
-	for $j=1, \dots, p$.
+	In addition, extra information on the features is often available. The extra
+	information, termed co-data, may be a partitioning of the features, such as 
+	pathway membership of the genes, or continuous information, such as $p$-values
+	from a previous study. Recently, several methods have been introduced that
+	use the co-data to improve prediction 
+	\cite[see, e.g.,][]{van_nee_flexible_2020,munch_adaptive_2019,
+	te_beest_improved_2017,van_de_wiel_better_2016}. 
 	
-	\subsection{Bayesian network-based elastic net regularization}
-	The purpose here is to incorporate multiple prior pathways into the analysis. To do so, we assume that the $G$ pathways are given as disjoint graphs with vertices $V_g = \{\upsilon_j : j \in \mathcal{G}_g\}$ for $g=1, \dots, G$, where $\mathcal{G}_g$ is the index set of the features corresponding to pathway $g$. The edges in pathway $g$ are denoted as $\mathcal{E}_g = \{\upsilon_j \sim \upsilon_k : j,k \in \mathcal{G}_g \}$ for $g=1, \dots, G$, where $x \sim y$ denotes an edge between vertices $x$ and $y$. The full network is denoted by edges $\mathcal{E}$ and vertices $\mathcal{G}$. Furthermore, throughout this document, we will let empty sums and products evaluate to zero and one, respectively. We also slightly abuse notation and let 
-	$$
-	\sum_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} a_{jk} := \sum_{j =1}^p \sum_{\substack{k < j: \\ \upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} a_{jk}.
-	$$
+	In the current paper, we apply the co-data approach
+	\cite[more specifically, a group-adaptive empirical Bayes approach akin to 
+	that in][]{munch_adaptive_2019}, together with the
+	inclusion of the unlabeled data, to the
+	Bayesian factor regression model. We present an extension 
+	of the method to a mixed mode factor analysis, the outcome is
+	binary instead of continuous. Simulations show that the approach is
+	competitive or even outperforms classical approaches in some settings. 
+	Applications to influenza vaccine efficacy 
+	prediction and oral cancer lymph node metastasis prediction show that the
+	approach has the potential to enhance predictive performance compared to
+	existing methods.
 	
-	Incorporation of these pathways should preferably influence the prediction model in two ways: (i) the overall importance of a pathway for the prediction problem at hand should influence the estimated absolute effect sizes for the features in that pathway and (ii) features with an edge in an important pathway should have similarly sized effect sizes, because an edge indicates a functional relationships between the features.
+	The rest of the paper is organised as follows: Sections \ref{sec:model} 
+	and \ref{sec:estimation} describe the model and its estimation in detail. 
+	The approach is demonstrated in a simulated setting in Section
+	\ref{sec:simulations} and two
+	real data settings in Section \ref{sec:applications}. We conclude with
+	a short discussion on the pros and cons of the method in Section 
+	\ref{sec:discussion}.
 	
-	Incorporation of these two desiderata could be achieved by estimation through a suitably penalised likelihood:
-	\begin{subequations}\label{eq:penlik}
-		\begin{align}
-		\hat{\bbeta} & := \underset{\bbeta}{\argmax} \ell(\y ; \bbeta) -\lambda_1 \sum_{g=1}^G \sqrt{\lambda'_g} \sum_{j \in \mathcal{G}_g}  |\beta_j| - \frac{\lambda_2}{2} \sum_{g=1}^G \lambda'_g \sum_{j \in \mathcal{G}_g}  \beta_j^2 \\
-		& \,\,\,\, - \gamma_1 \sum_{g=1}^G \sqrt{\gamma'_g} \sum_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} |\beta_j - \beta_k| - \frac{\gamma_2}{2} \sum_{g=1}^G \gamma'_g \sum_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} (\beta_j - \beta_k)^2,
-		\end{align}
+	\section{Model}\label{sec:model}
+	\subsection{Observational model}
+	We assume our observed $p$-dimensional feature vectors $\mathbf{x}_i$ and 
+	outcomes $y_i$, $i=1, \dots n$, are standardised, such that 
+	$\forall j: \sum_{i=1}^n x_{ij}=0$, 
+	$\forall j: \sum_{i=1}^n x^2_{ij}=n$,
+	$\sum_{i=1}^n y_{i}=0$, $\sum_{i=1}^n y_{i}^2=n$, and 
+	follow the factor regression model \cite[]{liang_use_2007}:
+	\begin{subequations}\label{eq:model}
+	  \begin{align}
+	    y | \bm{\lambda} & \sim \mathcal{N}(\bm{\beta}^{\text{T}} \bm{\lambda},
+	      \sigma^2), \label{eq:linearoutcome}\\
+	    \mathbf{x} | \bm{\lambda} & \sim \mathcal{N}_p(\mathbf{B}^{\text{T}} 
+	      \bm{\lambda}, \bm{\Psi}) \label{eq:linearfeatures}\\
+	    \bm{\lambda} & \sim \mathcal{N}_d(\mathbf{0}, \mathbf{I}_d),
+	      \label{eq:linearfactors}
+	  \end{align}
 	\end{subequations}
-	for some fixed (or separately estimated) hyper/penalty parameters $\lambda_1, \lambda_2, \gamma_1, \gamma_2 > 0$, as well as suitably chosen $\lambda'_g, \gamma'_g > 0$, for $g=1,\dots,G$. Note that we divide $\lambda_2$ and $\gamma_2$ by two to simplify the computations in the following.
-	
-	A nice feature of estimation through (\ref{eq:penlik}) is that the importance of a particular pathway is expressed through the $\lambda'_g$ and $\gamma'_g$. A large $\lambda'_g$ shrinks the absolute effect sizes in pathway $g$ towards zero, thereby satisfying desideratum (i). Similarly, a large $\gamma'_g$ shrinks the effect sizes in pathway $g$ towards each other, thereby satisfying the desideratum (ii).
-
-	The Bayesian equivalent of the estimates in (\ref{eq:penlik}) is obtained by maximum a posteriori (MAP) estimation under the following prior:
-	\begin{align*}
-	\pi(\bbeta) & \propto \exp \(-\lambda_1 \sum_{g=1}^G \sqrt{\lambda'_g} \sum_{j \in \mathcal{G}_g}  |\beta_j| - \frac{\lambda_2}{2} \sum_{g=1}^G \lambda'_g \sum_{j \in \mathcal{G}_g}  \beta_j^2 \) \\
-	& \,\,\,\, \cdot \exp \[ - \gamma_1 \sum_{g=1}^G \sqrt{\gamma'_g} \sum_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} |\beta_j - \beta_k| - \frac{\gamma_2}{2} \sum_{g=1}^G \gamma'_g \sum_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} (\beta_j - \beta_k)^2\].
-	\end{align*}
-	After introduction of three layers of latent variables $\bomega = \begin{bmatrix} \omega_1 & \cdots & \omega_n \end{bmatrix} \tr$ \cite[]{polson_bayesian_2013}, $\btau = \begin{bmatrix} \tau_1 & \cdots & \tau_p \end{bmatrix} \tr$, and $\bsigma = \begin{bmatrix} \sigma_{jk} \end{bmatrix} \tr$, for $j,k: \upsilon_j \sim \upsilon_k \in \mathcal{E}$ \cite[]{kyung_penalized_2010}, we arrive at the following Bayesian hierarchical model:
-	\begin{subequations}\label{eq:bayesmod}
-		\begin{align}
-		\y| \bbeta & \sim \prod_{i=1}^n \mathcal{B} \left( m_i, \expit ( \x\tr_i \bbeta ) \right),  \\
-		\bomega | \bbeta & \sim \prod_{i=1}^n \mathcal{PG}(m_i, |\x_i \tr \bbeta|), \\
-		\bbeta | \btau, \bsigma & \sim \prod_{g=1}^G \mathcal{N} \left(0, \( \lambda_2 \lambda'_g \tilde{\T}_g + \gamma_2 \gamma'_g \tilde{\Sm}_g \)^{-1} \right), \\
-		\btau, \bsigma & \overset{D}{=} \Biggl\{ \prod_{g=1}^G \mathbbm{1} \{\tau_j, \sigma_{jk} > 1 \} (\lambda'_g)^{\frac{|\mathcal{G}|}{2}} |\lambda_2 \lambda'_g \tilde{\T}_g + \gamma_2 \gamma'_g \tilde{\Sm}_g|^{-1/2} \label{eq:tsprior1}\\
-		& \,\,\,\,\,\, \cdot \[ \prod_{j \in \mathcal{G}_g} (\tau_j - 1)^{-\frac{1}{2}} \exp \( -\frac{\lambda_1^2}{2 \lambda_2} \tau_j \) \] \label{eq:tsprior2} \\
-		& \,\,\,\,\,\, \cdot \[ \prod_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} (\sigma_{jk} - 1)^{-\frac{1}{2}} \exp \( -\frac{\gamma_1^2}{2 \gamma_2} \sigma_{jk} \) \] \cdot c\(\lambda_1, \lambda_2, \gamma_1, \gamma_2, \frac{\gamma'_g}{\lambda'_g}\) \Biggr\}, \label{eq:tsprior3}
-		\end{align}
-	\end{subequations}
-	where $c\(\lambda_1, \lambda_2, \gamma_1, \gamma_2, \frac{\gamma'_g}{\lambda'_g}\)$ is a normalising constant, $\tilde{\T}_g = \diag [\tau_j/(\tau_j - 1)]$, for $j \in \mathcal{G}_g$, and
-	$$
-	(\tilde{\Sm}_g)_{jk} = \begin{cases}
-	\sum_{\substack{l \neq j: \\ \upsilon_j \sim \upsilon_l \\ \in \mathcal{E}_g}} \sigma_{jl}/(\sigma_{jl} - 1) & \text{if } j=k, \\
-	- \sigma_{jk}/(\sigma_{jk} - 1) & \text{if } \upsilon_j \sim \upsilon_k \in \mathcal{E}_g \text{ and } j \neq k, \\
-	0 & \text{otherwise}.
-	\end{cases}
-	$$
-	The posterior is not available in closed form, but we could proceed with inference by Gibbs sampling or some deterministic approximation method, such as variational Bayes.
-
-	\subsection{Empirical Bayes}\label{sec:empbayes}
-	So far we have ignored the choice of the `global' penalty parameters $\lambda_1$, $\lambda_2$, $\gamma_1$, $\gamma_2$, and their pathway-specific multipliers $\lambda'_g$ and $\gamma'_g$. A common method of estimating such hyper-parameters is through cross-validation. With so many hyper-parameters this is computationally infeasible in most high dimensional settings. We therefore propose to estimate the `global' penalty parameters by cross-validation and the penalty multipliers by empirical Bayes, similar in nature as in \cite{munch_adaptive_2018}.
-	
-	In Empirical Bayes the prior is estimated from the data, which renders it a frequentist treatment of Bayesian models. In \cite{casella_empirical_2001} an EM algorithm is introduced that estimates the penalty parameter. In our case we iteratively maximise the expectation of the joint log likelihood with respect to the posterior:
-	\begin{equation}\label{eq:ebEM}
-	\blambda'^{(k + 1)},\bgamma'^{(k+1)} = \underset{\blambda', \bgamma'}{\argmax} \E_{\bomega, \bbeta, \btau, \bsigma| \y} \[ \log \L_{\blambda', \bgamma'}(\y, \bomega, \bbeta, \btau, \bsigma) | \blambda^{(k)}, \gamma'^{(k)} \]
+	where $\bm{\lambda}$ consists of the latent factors, 
+	$\bm{\Psi}=\text{diag}(\psi_j)$, $j=1\dots, p$, are the uniquenesses,
+	$\sigma^2$ is the error variance, and $\mathbf{B}$ and $\bm{\beta}$ are 
+	the factor loadings. The latent factor dimension $d$ is 
+	assumed fixed and known. The factor model comes with some issues
+	(namely, rotational invariance and factor indeterminancy). These do
+	not play a major role in prediction problems, so we do not address them here.
+	SM Section \ref{sm-sec:modelunidentifiability} provides some pointers into
+	these issues. Model (\ref{eq:model}) implies a joint multivariate Gaussian 
+	distribution for $\begin{bmatrix} \mathbf{x}^{\text{T}} & y 
+	\end{bmatrix}^{\text{T}}$ (unconditional on $\bm{\lambda}$), 
+	so a prediction $\tilde{y}$ from observed features
+	$\tilde{\mathbf{x}}$ is obtained by taking the expectation of the
+	conditional distribution of $\tilde{y}$ given $\tilde{\mathbf{x}}$ from
+	model (\ref{eq:model}): 
+	\begin{equation}\label{eq:prediction}
+	  \mathbb{E}(\tilde{y}|\tilde{\mathbf{x}})=
+	  \tilde{\mathbf{x}}^{\text{T}}
+	  (\mathbf{B}^{\text{T}}\mathbf{B} + \bm{\Psi})^{-1}\mathbf{B}^{\text{T}}
+	  \bm{\beta}=:\tilde{\mathbf{x}}^{\text{T}}\tilde{\bm{\beta}}.
 	\end{equation}
-	until convergence to a local maximum. The difficulty herein is the expectation over the posterior, which is not available in closed form. We approximate it by variational Bayes.
 	
-	\subsection{Variational Bayes}
-	Let $\psi_j = \tau_j - 1$ and $\chi_{jk} = \sigma_{jk} - 1$. A variational approximation to the model in (\ref{eq:bayesmod}) is given by:
+	In the following, it is convenient to write $\bar{p}=p +1$,
+	$\bar{\mathbf{x}} = 
+	\begin{bmatrix}\mathbf{x}^{\text{T}} & y \end{bmatrix}^{\text{T}}$,
+	$\bar{\mathbf{B}}=\begin{bmatrix}\mathbf{B} & 
+	\bm{\beta}\end{bmatrix}$,
 	$$
-	Q(\bomega, \bbeta, \bpsi, \bchi) = q_{\bomega}(\bomega) q_{\bbeta}(\bbeta) q_{\bpsi}(\bpsi) q_{\bchi}(\bchi),
+	\bar{\bm{\Psi}}=\begin{bmatrix} 
+	\bm{\Psi} & \mathbf{0}_{p \times 1} \\
+	\mathbf{0}_{1 \times p} & \sigma^2,
+	\end{bmatrix}
+	$$ 
+	and consider the equivalent form of (\ref{eq:model}):
+	\begin{subequations}\label{eq:model2}
+	  \begin{align}
+	    \bar{\mathbf{x}} | \bm{\lambda} & \sim \mathcal{N}_{\bar{p}}( 
+	      \bar{\mathbf{B}}^{\text{T}} \bm{\lambda}, \bar{\bm{\Psi}}) \\
+	    \bm{\lambda} & \sim \mathcal{N}_d(\mathbf{0}, \mathbf{I}_d).
+	  \end{align}
+	\end{subequations}
+	
+	If the outcomes $y_i$ are of sums of $N_i$ disjoint binary events with
+	the shared probability of success, the linear outcome model 
+	(\ref{eq:linearoutcome}) is replaced with its logistic counterpart:
+	\begin{equation}\label{eq:logisticoutcome}
+	y | \bm{\lambda}, \bm{\beta}, \beta_0 \sim 
+	\mathcal{B}\left(N, \expit(\beta_0 + \bm{\beta}^{\text{T}}
+	\bm{\lambda})\right),
+	\end{equation}
+	where $\mathcal{B}\left(N, \pi\right)$ denotes the binomial distribution with
+	number of trials $N$ and success probability $\pi$. Note that the logistic
+	model includes an intercept $\beta_0$ to accommodate unbalanced data, 
+	whereas the linear model simply considers standardised data.
+	Feature and factor models (\ref{eq:linearfeatures}) and 
+	(\ref{eq:linearfactors}), in combination with outcome model
+	(\ref{eq:logisticoutcome}) result in a mixed-mode factor model, with Gaussian 
+	and binomially distributed features and outcome, respectively.
+	This mixed-mode extension is detailed in Section 
+	\ref{sm-sec:logistic} of the Supplementary Material (SM).
+	
+	\subsection{Bayesian prior model}
+	In the Bayesian version of the model, the parameters $\theta := 
+	\{ \bar{\mathbf{B}},\bar{\psi}_1,\dots,
+	\bar{\psi}_{p+1}\}$ are endowed with conditionally conjugate prior 
+	distributions:
+	\begin{subequations}\label{eq:prior}
+  	\begin{align}
+  	  \bar{\mathbf{B}} | \bar{\psi}_1, \dots, \bar{\psi}_{\bar{p}} & \sim 
+  	    \prod_{\bar{j}=1}^{\bar{p}} \mathcal{N}_{d}(\mathbf{0}_{d}, 
+  	  \bar{\psi}_{\bar{j}} \gamma_{\bar{j}} \mathbf{I}_d), \\
+  	  \bar{\psi}_1, \dots, \bar{\psi}_{\bar{p}} & \sim \prod_{\bar{j}=1}^{\bar{p}} 
+  	    \Gamma^{-1}(\kappa_{\bar{j}}, \nu_{\bar{j}}),
+  	\end{align}
+  \end{subequations}
+  where $\Gamma^{-1}(\kappa,\nu)$ denotes the inverse 
+  Gamma distribution with shape $\kappa$ and scale $\nu$. 
+  Note that index $\bar{j}$ and dimension $\bar{p}$  
+  indicate the use of the equivalent model formulation (\ref{eq:model2}).
+  In addition, we write $\bar{\psi}_{\bar{p}}:=\sigma^2$ for notational 
+  convenience. Here, the variance of $\bar{\mathbf{b}}_j$ 
+  (column $\bar{j}$ of $\bar{\mathbf{B}}$) scales with 
+  error variance/uniquenesses
+  $\bar{\psi}_{\bar{j}}$ as is common in Bayesian
+  (univariate) linear models. This is mostly for computational reasons, but is
+  often justified as a solution to scaling problems in multivariate 
+  regression problems \cite[]{leday_gene_2017}. 
+  
+  In the Bayesian model a prediction $\tilde{y}$ from features 
+  $\tilde{\mathbf{x}}$ is obtained by averaging over the posterior: 
+	\begin{equation}\label{eq:bayesianprediction}
+	  \mathbb{E}^*(\tilde{y}|\tilde{\mathbf{x}})=
+	  \tilde{\mathbf{x}}^{\text{T}}
+	  \mathbb{E}_{\bar{\mathbf{B}}, \bar{\bm{\Psi}} | \bar{\mathbf{x}}}
+	  \[(\mathbf{B}^{\text{T}}\mathbf{B} + 
+	  \bm{\Psi})^{-1} \mathbf{B}^{\text{T}}
+	  \bm{\beta}\]=:\tilde{\mathbf{x}}^{\text{T}}\bm{\beta}^*.
+	\end{equation}
+	In practice, this expectation is hard to compute. 
+	Here, we use a combination of variational Bayes for posterior computation and 
+	Monte Carlo simulation for approximation of (\ref{eq:bayesianprediction}). 
+	An alternative to Monte Carlo simulation is Taylor approximation, as explained 
+	in Section \ref{sm-sec:posteriorexpectation} of the SM.
+	
+	\subsection{Additional feature structure}
+	In some applications, the features naturally come partitioned into groups
+	$\mathcal{G}_1, \dots, \mathcal{G}_G$. Examples of such partitions are
+	distinct functional networks of genes, features with significant versus 
+	features with non-significant association to the outcome in a previous study, 
+	and feature groups based on prior expert knowledge of feature importance
+	\cite[see, e.g.,][]{munch_adaptive_2019}.
+	Figure \ref{fig:model} displays model (\ref{eq:model}) with partitioned 
+	features as a Bayesian network.
+	\begin{figure}[h!]
+	  \centering
+    \includegraphics[width=0.8\linewidth]{factor_network.pdf}
+    \caption{Model (\ref{eq:model}) with paritioned features as a Bayesian 
+    network, where the vertical dotted lines denote a partitioning of features 
+    $X_1, \dots, X_p$ into groups $g=1, \dots, G$. Green and blue circles denote
+    latent and observed variables, respectively. Note that the $\delta_j$ and
+    $\epsilon$ are implicit in model (\ref{eq:model}) and omitted there for 
+    brevity. Here they denote the Gaussian, centred errors. That is, we have
+    $y = \bm{\beta}^{\text{T}} \bm{\lambda} + \epsilon$, 
+    $\mathbf{x} = \mathbf{B}^{\text{T}} \bm{\lambda} + \bm{\delta}$,
+    with $\epsilon \sim \mathcal{N}(0,\sigma^2)$ and
+    $\bm{\delta} \sim \mathcal{N}_p(0,\bm{\Psi})$.}
+    \label{fig:model}
+  \end{figure}
+  
+	Straightforward inclusion of the partitioning is possible through
+	(i) a factor loadings partitioning, i.e., 
+	$\mathbf{B} = \begin{bmatrix}\begin{array}{c|c|c}\mathbf{B}_1 & \cdots & 
+	\mathbf{B}_G\end{array}\end{bmatrix}$, or (ii) a uniquenessess partitioning,
+	i.e., 
 	$$
+	\bm{\Psi} = \begin{bmatrix}
+	  \bm{\Psi}_1 &  & \\
+	  & \ddots & \\
+	  & & \bm{\Psi}_G
+	\end{bmatrix}.
+	$$
+	Prediction (\ref{eq:prediction}) shows that the effect of
+	inflation of diagonal element $\psi_{j}$ or shrinkage of column 
+	$\mathbf{b}_{j}$ on the induced regression coefficients 
+	$\tilde{\bm{\beta}}$ and $\bm{\beta}^*$, is similar. 
+	With an appropriate choice of priors for $\mathbf{B}$ and 
+	$\psi_j, \dots, \psi_p$, the partitioning of the 
+	features $\mathcal{G}_1, \dots, \mathcal{G}_G$ is included in the prior model.
+	Here, We pursue option (i) and model the feature structure through the 
+	$\mathbf{B}$ prior, by considering groupwise constant 
+	(up to a uniquenessess scaling) prior variances, i.e.,
+	$\forall j \in \mathcal{G}_g: \gamma_j=\gamma_g$. The groupwise constant prior
+	variance shrinks feature effects in the same group similarly. A small
+	group-specific prior variance results in more shrinkage of feature effects,
+	compared to a group with larger group-specific prior variance. By setting the
+	group variances, the prior expected relevance of the group's features is
+	encoded in the model. However, determining the prior variances is not 
+	straighforward in most applications. Section \ref{sec:hyperparameters} 
+	proposes an empirical Bayes approach to estimate these variances.
+	
+	\section{Estimation}\label{sec:estimation}
+	Maximum likelihood estimation of model (\ref{eq:model2}) is straightforward
+	when $n < \bar{p}$ and many algorithms are available in literature. 
+	In the $\bar{p} > n$ domain, estimation is possible through penalized 
+	likelihood maximisation. In the current paper, focus is on the Bayesian model,
+	so we refer the reader to Sections \ref{sm-sec:maximumlikelihood} and
+	\ref{sm-sec:penalizedmaximumlikelihood} of the SM for details on 
+	maximum (penalized) likelihood estimation of (\ref{eq:model2}). 
+	
+	Bayesian posteriors are commonly approximated through MCMC sampling. 
+	Sampling from the posterior of model 
+	(\ref{eq:model2}) and (\ref{eq:prior}) is relatively straightforward 
+	(see SM Section \ref{sm-sec:gibbssampling} for a Gibbs sampler).
+	However, due to high-dimensionality of the parameters, sampling is relatively 
+	slow. In addition, the MCMC chain shows poor mixing in all investigated 
+	applications and simulations. Poorly mixing MCMC chains require 
+	a prohibitive number of samples to properly explore the posterior. Here, we
+	avoid computationally expensive MCMC sampling by a mean-field variational 
+	Bayes approximation of the posterior.
+	
+	Mean-field variational Bayes methods minimise the Kullback-Leibler divergence
+	of the posterior from the (approximate) variational posterior. With observed 
+	variables $\mathbf{X}$, some partitioning of 
+  unobserved variables $\bm{\theta} = \{ \theta_1, \dots, \theta_K \}$, and
+  an factorised posterior assumption $p(\bm{\theta} | \mathbf{X}) \approx
+  \prod_{k=1}^K q(\theta_k)$, this results in marginal posteriors
+  $q(\theta_k) \propto
+  \exp \{ \mathbb{E}_{\bm{\theta}_{-k} | \theta_k, \mathbf{X}} 
+  \[ \log p( \theta_k | \bm{\theta}_{-k}, \mathbf{X}) \] \}$. Note that we 
+  slightly abuse notation and let $q(\cdot)$ denote distinct densities based 
+  on the corresponding argument.
+  For $p( \theta_k | \bm{\theta}_{-k}, \mathbf{X})$ in 
+  the exponential family, $q(\theta_k)$ is in the same exponential
+  family with natural parameter $\mathbb{E}_{\bm{\theta}_{-k} | \theta_k, 
+  \mathbf{X}} \[ \eta (\bm{\theta}_{-k},\mathbf{X}) \]$, where 
+  $\eta (\bm{\theta}_{-k},\mathbf{X})$ is the natural parameter of the full
+  conditional distribution \cite[]{blei_variational_2017}.
+  
+  Here, let $\bm{\Lambda} = \begin{bmatrix} \bm{\lambda}_1 & \cdots 
+  \bm{\lambda}_n \end{bmatrix}^{\text{T}}$ and the approximate posterior 
+  factorise as
+  \begin{equation}\label{eq:variationalposterior}
+    p(\bm{\Lambda},\bar{\mathbf{B}},\bar{\psi}_1, \dots,
+    \bar{\psi}_{\bar{p}} | \bar{\mathbf{X}}) \approx q(\bm{\Lambda})
+    q(\bar{\mathbf{B}})q(\bar{\psi}_1, \dots, \bar{\psi}_{\bar{p}}),
+  \end{equation}
+  so that the approximate posterior that minimises the Kullback-Leibler 
+  divergence of posterior to approximation is
+  \begin{subequations}\label{eq:variationaldistributions}
+    \begin{align}
+      q(\bm{\Lambda}) & \overset{D}{=} \prod_{i=1}^{n} \mathcal{N}_d
+      (\bm{\phi}_i, \bm{\Xi}), \\
+      q(\bar{\mathbf{B}}) & \overset{D}{=} \prod_{\bar{j}=1}^{\bar{p}}
+      \mathcal{N}_d (\bm{\mu}_{\bar{j}}, \bm{\Omega}_{\bar{j}}),\\
+      q(\bar{\psi}_1, \dots, \bar{\psi}_{\bar{p}}) & \overset{D}{=}
+      \prod_{\bar{j}=1}^{\bar{p}} \Gamma^{-1}
+      (n/2 + d/2 + \kappa_{\bar{j}}, \zeta_{\bar{j}}).
+    \end{align}
+  \end{subequations}
+  The so-called variational parameters are
+  \begin{subequations}\label{eq:variationalparameters}
+    \begin{align}
+      \bm{\phi}_i & = \left\{ \sum_{{\bar{j}}=1}^{\bar{p}} \mathbb{E}
+        (\bar{\psi}_{\bar{j}}^{-1})
+        \[\mathbb{V}(\bar{\mathbf{b}}_{\bar{j}}) + 
+        \mathbb{E}(\bar{\mathbf{b}}_{\bar{j}})
+        \mathbb{E}(\bar{\mathbf{b}}^{\text{T}}_{\bar{j}})\] + 
+        \mathbf{I}_d \right\}^{-1}
+        \mathbb{E}(\bar{\mathbf{B}}) \mathbb{E}(\bar{\bm{\Psi}}^{-1})
+        \bar{\mathbf{x}}_i, \, i=1, \dots, n,\\
+      \bm{\Xi} & = \left\{ \sum_{{\bar{j}}=1}^{\bar{p}} 
+        \mathbb{E}(\bar{\psi}_{\bar{j}}^{-1})
+        \[\mathbb{V}(\bar{\mathbf{b}}_{\bar{j}}) + 
+        \mathbb{E}(\bar{\mathbf{b}}_{\bar{j}})
+        \mathbb{E}(\bar{\mathbf{b}}_{\bar{j}}^{\text{T}})\] + \mathbf{I}_d 
+        \right\}^{-1},\\
+      \bm{\mu}_{\bar{j}} &= \[\mathbb{E}(\bm{\Lambda}^{\text{T}})
+        \mathbb{E}(\bm{\Lambda}) + n \mathbb{V}(\mathbf{\bm{\lambda}}_i) +
+        \gamma_{{\bar{j}}}^{-1} \mathbf{I}_d\]^{-1}
+        \mathbb{E}(\bm{\Lambda}^{\text{T}})\bar{\mathbf{x}}_{\bar{j}}, \, 
+        {\bar{j}}=1,\dots, \bar{p},\\
+      \bm{\Omega}_{\bar{j}} & = \mathbb{E}(\psi_{\bar{j}}^{-1})^{-1}
+        \[\mathbb{E}(\bm{\Lambda}^{\text{T}})
+        \mathbb{E}(\bm{\Lambda}) + n \mathbb{V}(\mathbf{\bm{\lambda}}_i) +
+        \gamma_{{\bar{j}}}^{-1} \mathbf{I}_d\]^{-1}, \, {\bar{j}}=1,\dots 
+        {\bar{p}}, \\
+      \zeta_{\bar{j}} & = \bar{\mathbf{x}}_{\bar{j}}^{\text{T}} 
+        \bar{\mathbf{x}}_{\bar{j}}/2 -
+        \mathbb{E}(\bar{\mathbf{b}}_{\bar{j}}^{\text{T}})\mathbb{E}
+        (\bm{\Lambda}^{\text{T}})
+        \bar{\mathbf{x}}_{\bar{j}} + 
+        \text{tr}\[\mathbb{E}(\bm{\Lambda}^{\text{T}})
+        \mathbb{E}(\bm{\Lambda})\mathbb{V}(\bar{\mathbf{b}}_{\bar{j}})\]/2 +
+        n\text{tr}\[\mathbb{V}(\bm{\lambda}_i)
+        \mathbb{V}(\bar{\mathbf{b}}_{\bar{j}})\]/2 \nonumber \\
+      & \,\,\,\,\,\, \,\,\, + \mathbb{E}(\bar{\mathbf{b}}_{\bar{j}}^{\text{T}})
+        \mathbb{E}(\bm{\Lambda}^{\text{T}}) \mathbb{E}(\bm{\Lambda})
+        \mathbb{E}(\bar{\mathbf{b}}_{\bar{j}})/2 + 
+        n\mathbb{E}(\bar{\mathbf{b}}_{\bar{j}}^{\text{T}}) 
+        \mathbb{V}(\bm{\lambda}_i)
+        \mathbb{E}(\bar{\mathbf{b}}_{\bar{j}})/2 + 
+        \gamma_{\bar{j}}^{-1}\mathbb{E}
+        (\mathbf{b}_{\bar{j}}^{\text{T}})\mathbb{E}(\mathbf{b}_{\bar{j}})/2 
+        \label{eq:zeta} \\
+      & \,\,\,\,\,\, \,\,\, + \gamma_{\bar{j}}^{-1}
+        \text{tr}\[\mathbb{V}(\mathbf{b}_{\bar{j}})\]/2 + \nu_{\bar{j}}, 
+        \, {\bar{j}}=1,\dots,{\bar{p}}, \nonumber
+    \end{align}
+  \end{subequations}
+  where we slightly abuse notation and let 
+  $\bar{\mathbf{x}}_i$ and
+  $\bar{\mathbf{x}}_{\bar{j}}$ denote the $i$th row and $\bar{j}$th column of 
+  $\bar{\mathbf{X}}$, respectively.
+  The expectations and variances are
+  \begin{align*}
+    \mathbb{E}(\bar{\psi}_{\bar{j}}^{-1}) & = (n/2 + d/2 + \kappa_{\bar{j}})/
+      \zeta_{\bar{j}}, \, {\bar{j}}=1,\dots,{\bar{p}},\\
+    \mathbb{E}(\bar{\mathbf{b}}_{\bar{j}}) & = \bm{\mu}_{\bar{j}}, 
+      \, {\bar{j}}=1,\dots,{\bar{p}},\\
+    \mathbb{V}(\bar{\mathbf{b}}_{\bar{j}}) & = \bm{\Omega}_{\bar{j}},
+      \, {\bar{j}}=1,\dots,{\bar{p}},\\
+    \mathbb{E}(\bm{\Lambda}) & = \bm{\Phi}, \\
+    \mathbb{V}(\bm{\lambda}_i) & = \bm{\Xi}, \, i=1,\dots,n,
+  \end{align*}
+  with $\bm{\Phi} = \begin{bmatrix} \bm{\phi}_1 & \cdots \bm{\phi}_n
+  \end{bmatrix}^{\text{T}}$. 
+  The parameters contain cyclic dependencies and are
+  updated until convergence.
+  
+	Model (\ref{eq:model}) describes a general covariance matrix. However, 
+	a correlation matrix better describes the standardised data. In 
+	the frequentist setting the general covariance model is straightforward to 
+	extend to the correlation model by restriction of the likelihood to the space 
+	of correlation matrices. Moreover, this
+	is the default setting in the \texttt{R} package \texttt{factanal}.
+	In the Bayesian setting, this requires either more intricate prior modelling 
+	or post hoc corrections of the posterior. Here, we consider a post hoc
+	correction that ensures that the posterior expectation of the covariance of
+	$\bar{\mathbf{X}}$ desribes a correlation matrix: 
+	$$
+	\forall \bar{j}: 
+	\E_{\bar{\mathbf{B}},\bar{\psi}_1 ,\dots, \bar{\psi}_{\bar{p}} | 
+  \bar{\mathbf{X}}} \(\bar{\mathbf{b}}_{\bar{j}}^{\text{T}} 
+  \bar{\mathbf{b}}_{\bar{j}} + {\bar{\psi}}_{\bar{j}}\) = 1.
+  $$
+	SM Section 
+	\ref{sm-sec:correlation} contains more details on 
+	this posterior correction and a possible future direct correlation modelling
+	approach. In the following, the post hoc correction approach is 
+	applied.
+	
+	\subsection{Unlabeled observations}
+	Inspection of (\ref{eq:prediction}) learns that the predictions 
+	$\mathbb{E}(\tilde{y}|\tilde{\mathbf{x}})$
+	depend on the observational model for $\mathbf{x}$ through $\mathbf{B}$ and
+	$\bm{\Psi}$. As detailed in \cite{liang_use_2007}, this implies that 
+	estimation benefits from additional unlabeled features $\mathbf{x}_i$,
+	$i=n+1, \dots, n + m$, with the corresponding unobserved outcomes
+	$z_i$, $i=n+1, \dots n + m$. A straightforward method of including the 
+	unlabeled observations is to consider the full data likelihood
+	$p(\mathbf{X}, \mathbf{z}, \mathbf{y} | \bar{\mathbf{B}}, \bar{\bm{\Psi}})$,
+	with $\mathbf{z} = \begin{bmatrix} z_{n+1} & \cdots & z_{n+m} 
+	\end{bmatrix}^{\text{T}}$
+	\cite[]{banbura_maximum_2014,liu_maximum_1998}.
+	Maximum likelihood estimation then requires marginalisation over unobserved
+	outcomes $z_i$. Section \ref{sm-sec:unlabeled} in the
+	SM describes an EM algorithm for (penalized) maximum likelihood estimation 
+	with missing data. 
+	
+	In the Bayesian model, the unobserved outcomes are now included in the 
+	posterior distributions. The variational Bayes posterior 
+	(\ref{eq:variationalposterior}) is augmented as
+	$$
+  p(\bm{\Lambda},\bar{\mathbf{B}},\bar{\psi}_1, \dots,
+  \bar{\psi}_{\bar{p}}, \mathbf{z}| \bar{\mathbf{X}}) \approx q(\bm{\Lambda})
+  q(\bar{\mathbf{B}})q(\bar{\psi}_1, \dots, \bar{\psi}_{\bar{p}})
+  q(\mathbf{z}),
+  $$
 	where
 	\begin{align*}
-	q^*_{\bomega} (\bomega) & \overset{D}{=} \prod_{i=1}^n \mathcal{PG} (m_i, c_i), \\
-	q^*_{\bbeta}(\bbeta) & \overset{D} = \mathcal{N} (\bmu, \bSigma), \\
-	q^*_{\bpsi}(\bpsi) & \overset{D} = \prod_{g=1}^G \prod_{j \in \mathcal{G}_g} \mathcal{GIG} \(\frac{1}{2}, \frac{\lambda_1^2}{\lambda_2}, \eta_j\), \\
-	q^*_{\bchi}(\bchi) & \overset{D} = \prod_{g=1}^G \prod_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} \mathcal{GIG} \(\frac{1}{2}, \frac{\gamma_1^2}{\gamma_2}, \zeta_{jk}\).
+	  q(\mathbf{z}) & \overset{D}{=} \prod_{i={n+1}}^{n+m} \mathcal{N}
+	    (\upsilon_i, \chi) \text{, with}\\
+	  \upsilon_i & = \mathbb{E}(\bar{\mathbf{b}}_{\bar{p}}^{\text{T}} )
+	    \mathbb{E}(\bm{\lambda}_i), \\
+	  \chi & = \mathbb{E}(\bar{\psi}_{\bar{p}}^{-1})^{-1}.
 	\end{align*}
-	
-	The variational parameters are estimated by updating them until convergence:
-	\begin{subequations}\label{eq:estequations}
-		\begin{align}
-		\bSigma^{(t+1)} & = \Bigg\{ \X \tr \diag \[\frac{m_i}{2c_i^{(t)}} \tanh \( \frac{c_i^{(t)}}{2} \) \] \X \\
-		& \,\,\,\,\,\,\,\,\,\, + \lambda_2 \bLambda' + \lambda_1 \sqrt{\lambda_2} \bLambda' \diag \[(\eta_j^{(t)})^{-1/2} \]  \\
-		& \,\,\,\,\,\,\,\,\,\, + \gamma_2 \bGamma' \Lm + \gamma_1 \sqrt{\gamma_2} \bGamma' \diag\( \tilde{\Z}_g^{(t)}\) \Bigg\}^{-1} , \\
-		\bmu^{(t+1)} & = \bSigma^{(t+1)} \X \tr (\y - \frac{1}{2}\m), \\
-		c_i^{(t+1)} & = \sqrt{\x_i \tr \bSigma^{(t+1)} \x_i + (\x_i \tr \bmu^{(t+1)})^2}, \\
-		\eta_j^{(t+1)} & = \lambda_2 \lambda'_{g(j)} [\bSigma_{jj}^{(t+1)} + (\bmu_j^{(t+1)})^2], \\
-		\zeta_{jk}^{(t+1)} & = \gamma_2 \gamma'_{g(jk)} [(\bmu_j^{(t+1)})^2 + (\bmu_k^{(t+1)})^2 \\
-		& \,\,\,\,\,\,\,\,\,\, - 2 \bmu_j^{(t+1)} \bmu_k^{(t+1)} + \bSigma_{jj}^{(t+1)} + \bSigma_{kk}^{(t+1)} - 2 \bSigma_{jk}^{(t+1)} ],
-		\end{align}
-	\end{subequations}
-	where $\bLambda'=\diag(\lambda'_{g(j)})$, $\bGamma'$ is a diagonal matrix with each $\gamma'_g$ repeated $\mathcal{G}_g$ times , $\Lm$ is the unweighted and unnormalised Laplacian matrix of the prior graph $(\mathcal{G}, \mathcal{E})$ and
+	In addition, the term $\mathbbm{1}_{\bar{j}=\bar{p}}m\mathbb{V}(z_i)/2$ is 
+	added to (\ref{eq:zeta}) and all occurences of $\bar{\mathbf{x}}_i$ and 
+	$\bar{\mathbf{x}}_{\bar{j}}$ in (\ref{eq:variationalparameters}) are replaced
+	with $\tilde{\mathbf{x}}_i$ and $\tilde{\mathbf{x}}_{\bar{j}}$, where
 	$$
-	(\tilde{\Z}_g^{(t)})_{jk} = \begin{cases}
-	\sum_{\substack{l \neq j: \\ \upsilon_j \sim \upsilon_l \\ \in \mathcal{E}_g}} (\zeta^{(t)}_{jl})^{-1/2} & \text{if } j=k, \\
-	- (\zeta^{(t)}_{jk})^{-1/2} & \text{if } \upsilon_j \sim \upsilon_k \in \mathcal{E}_g \text{ and } j \neq k, \\
-	0 & \text{otherwise}.
-	\end{cases}
+	\tilde{\mathbf{X}} = \begin{bmatrix}
+    \multicolumn{1}{c}{\multirow{2}{*}{$\mathbf{X}$}} & \mathbf{y} \\
+    \multicolumn{1}{c}{} & \mathbb{E}(\mathbf{z})
+  \end{bmatrix},
 	$$
-	
-	\subsection{Empirical-variational Bayes}
-	
-	The expectation in Section \ref{sec:empbayes} is approximated using variational Bayes, i.e., $\E_{\bomega, \bbeta, \btau, \bsigma | \y} [ \cdot ] \approx \E_Q [\cdot]$. In our case, this amounts to:
+	and
 	\begin{align*}
-	\E_Q & [\log \L_{\blambda', \bgamma'} (\y, \bomega, \bbeta, \btau, \bsigma) | \blambda'^{(k)}, \bgamma'^{(k)}] \propto \sum_{g=1}^G \frac{|\mathcal{G}_g|}{2} \log \lambda'_g \\
-	& - \frac{\lambda_2}{2} \sum_{g=1}^G \lambda'_g d_g^{(k)} - \frac{\gamma_2}{2} \sum_{g=1}^G \gamma'_g h_g^{(k)} + \sum_{g=1}^G \log c\( \lambda_1, \lambda_2, \gamma_1, \gamma_2, \frac{\gamma'_g}{\lambda'_g} \),
+	  \mathbb{E}(z_i) & = \upsilon_i, \\
+	  \mathbb{V}(z_i) & = \chi.
 	\end{align*}
-	where proportionality is with respect to the $\lambda'_g$ and $\gamma'_g$, and
-	\begin{align*}
-	d_g^{(k)} & = \sum_{j \in \mathcal{G}_g} \[\bSigma_{jj}^{(k)} + (\bmu_j^{(k)})^2\] \(1 + \frac{\lambda_1}{\sqrt{\lambda_2 \eta_j^{(k)}}}\), \\
-	h_g^{(k)} & = \sum_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} \[ (\bmu_j^{(k)})^2 + (\bmu_k^{(k)})^2 - 2 \bmu_j^{(k)} \bmu_k^{(k)} + \bSigma_{jj}^{(k)} + \bSigma_{kk}^{(k)} - 2 \bSigma_{jk}^{(k)} \] \\
-	&  \,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\,\, \cdot \( 1 + \frac{\gamma_1}{\sqrt{\gamma_2 \zeta_{jk}^{(k)}}} \).
-	\end{align*}
+	SM Section \ref{sm-sec:gibbssampling} 
+  contains more details on the inclusion of
+  unlabeled observations in the (approximate) Bayesian posterior computations
+  through MCMC. Although not shown here due to brevity, the 
+  unobserved outcome approach is straightforward to extend to an unobserved
+  features approach.  
 	
-	Maximisation of this function with respect to $\blambda'$ and $\bgamma'$ is problematic, since we do not now the form of $c( \cdot )$. To circumvent this problem and simplify the computations, we will assume that $\frac{\gamma'_g}{\lambda'_g}=u$ for some constant $u$ and for all $g=1, \dots, G$. We argue that this is not unreasonable, since it describes the relationship between the information in the vertices and the information in the edges as constant over different pathways. So in order to estimate our new penalty multipliers, we solve the following optimisation problem:
-	\begin{align*}
-	\blambda'^{(k+1)} & = \underset{\blambda'}{\argmax} \sum_{g=1}^G \frac{|\mathcal{G}_g|}{2} \log \lambda'_g - \frac{1}{2} \sum_{g=1}^G \lambda'_g \(\lambda_2 d_g^{(k)} + u \gamma_2 h_g^{(k)}\),
-	\end{align*}
-	which is a convex problem, and afterwards calculate $\gamma'_g=u \cdot \lambda'_g$. An (approximate) alternative, without this assumption, is described in Section \ref{sec:apprempvarbayes}.
+	\subsection{Latent dimension}
+	Although we initially assumed $d$ to be the true latent dimension, in general
+	it is unkown and needs to be estimated. Methods for dimension estimation are 
+	plentiful in the literature \cite[see, e.g., ][]{zwick_comparison_1986}. 
+	Our modest aim of accurate prediction does not require correct estimation of 
+	the latent dimension, as even picking the true latent dimension does not 
+	always lead to optimal predictions \cite[]{goeman_statistical_2006}.
+	Without this requirement of correct latent dimension estimation, we resort to
+	the simple and fast Kaiser criterion. The Kaiser criterion picks $d$ 
+	that retains
+	dimensions with variance contribution larger than that of the average feature 
+	$\mathbf{x}$. This amounts to choosing $d=\sum_{j=1}^p\mathbbm{1}
+	\{v_j > 1\}$, with $v_j$, $j=1, \dots, p$, the eigenvalues of the correlation 
+	matrix. That is, we set $d$ to the number of eigenvalues of the 
+	correlation matrix of $\mathbf{X}$ larger than one.
+	
+	% In fact, 
+	% \cite{goeman_statistical_2006} show the balance between bias and variance
+	% that leads to optimal prediction error is for $d$ 
+	% somewhere between 0 and the true latent dimension.
+	% Here, we consider a few estimation 
+	% methods:
+	% \begin{enumerate}
+	%   \item Pick $d$ such that a 
+	%     pre-specified proportion of the variance of
+	%     $\mathbf{X}$ is explained with the latent factors from a simple
+	%     factor analysis. \cite{ferrari_bayesian_2020} propose the proportion of
+	%     explained variance 0.9. In practice this amounts to choosing $d$, such 
+	%     that $\sum_{j=1}^d v_j/p > 0.9$, where $v_j$ is the $j$th largest eigen
+	%     value of the correlation matrix of $\mathbf{X}$.
+	%   \item The Kaiser criterion picks $d$ such that we retain dimensions with
+	%     variance contribution larger than that of the average feature 
+	%     $\mathbf{x}$. This amounts to choosing $d=\sum_{j=1}^p\mathbbm{1}
+	%     \{v_j > 1\}$, i.e., set $d$ to the number of eigen values of the 
+	%     correlation matrix of $\mathbf{X}$ larger than one.
+	%   \item The Marchenku-Pastur law based rule picks $d$ such that all 
+	%     dimensions contribute more to the variance of $\mathbf{X}$ than
+	%     than of the average feature in the asymptotic limit 
+	%     ($n,p \rightarrow \infty$) of a random matrix
+	%     $\mathbf{X}_{n \times p}$. In practice, this means choosing 
+	%     $d=\sum_{j=1}^p \mathbbm{1} \{ v_j > (1 + \sqrt{p/n})^2 \}$.
+	% \end{enumerate}
+	% 
+	% - more explanation needed
+	
+	\subsection{Hyperparameters}\label{sec:hyperparameters}
+	The Bayesian model requires a choice of
+	hyperparameters $\gamma_g$, $\kappa_j$ and $\nu_j$. 
+	Choosing the $\gamma_g$ by hand requires intricate prior expert
+	knowledge, which might not be available. An alternative is to estimate them
+	from the data using empirical Bayes. Or, if we do know the overall scale of
+	the $\gamma_g$, but not the group-specific deviations, we may reparametrise as
+	$\gamma_g = \gamma \gamma_g'$, fix the overall scale $\gamma$ and estimate the
+	group-specific multipliers $\gamma_g'$.
+	
+	In both empirical Bayes settings we maximise the marginal 
+	likelihood (constrained maximisation for the second approach). Direct 
+	marginal likelihood maximisation requires calculation of a $p$-dimensional 
+	integral for which no closed form is available. With $p$ large (i.e., the high
+	dimensional setup considered here), an EM algorithm with iterations
+	$$
+  \bm{\gamma}^{(k + 1)} = \underset{\bm{\gamma}}{\argmax} 
+  \mathbb{E}_{ \theta | \mathbf{y}} \[\log p(\bar{\mathbf{B}} | 
+  \bar{\psi}_1, \dots, \bar{\psi}_{\bar{p}} ) | 
+  \bm{\gamma}^{(k)} \],
+  $$
+	where $\bm{\gamma} = \begin{bmatrix} \gamma_1 & \cdots \gamma_G 
+	\end{bmatrix}^{\text{T}}$, is computationally much more feasible.
+	With a variational Bayes approximation of the difficult expectation, this
+  results in
+  $$
+  \bm{\gamma}^{(k + 1)} = \underset{\bm{\gamma}}{\argmax}\left\{
+  - \frac{1}{2} \sum_{g=1}^G \gamma_g^{-1} 
+  \sum_{j \in \mathcal{G}_g} \mathbb{E}(\bar{\psi}_j^{-1}) 
+  \left\{ \text{tr} \[ 
+  \mathbb{V}(\bar{\mathbf{b}}_j)\] + \mathbb{E}(\bar{\mathbf{b}}_j^{\text{T}})
+  \mathbb{E}(\bar{\mathbf{b}}_j) \right\} - \frac{d}{2} 
+  \sum_{g=1}^{G} |\mathcal{G}_g| \log \gamma_{g} \right\}.
+  $$
+  Finally, this gives empirical Bayes updates:
+  $$
+  \gamma_g^{(k + 1)} = \frac{\sum_{j \in \mathcal{G}_g} 
+  \mathbb{E}(\bar{\psi}_j^{-1}) \left\{ \text{tr} \[ 
+  \mathbb{V}(\bar{\mathbf{b}}_j)\] + \mathbb{E}(\bar{\mathbf{b}}_j^{\text{T}})
+  \mathbb{E}(\bar{\mathbf{b}}_j) \right\}}{|\mathcal{G}_g| d}.
+  $$
+  For the $\gamma_g = \gamma \gamma_g'$ parametrisation, the updates
+  \begin{align*}
+  \bm{\gamma}'^{(k + 1)} & = \underset{\bm{\gamma}'}{\argmax}\left\{ 
+  - \frac{1}{\gamma} \sum_{g=1}^G \gamma_g'^{-1} 
+  \sum_{j \in \mathcal{G}_g} \mathbb{E}(\bar{\psi}_j^{-1}) 
+  \left\{ \text{tr} \[ 
+  \mathbb{V}(\bar{\mathbf{b}}_j)\] + \mathbb{E}(\bar{\mathbf{b}}_j^{\text{T}})
+  \mathbb{E}(\bar{\mathbf{b}}_j) \right\} - \frac{d}{2} 
+  \sum_{g=1}^{G} |\mathcal{G}_g| \log \gamma_{g}' \right\}, \\
+  & \text{subject to } \prod_{g=1}^G \gamma_g'^{|\mathcal{G}_g|}=1,
+  \end{align*}
+  are not available
+  in closed form, but still convex and easy to compute with standard numerical
+  optimisation tools.
+	Empirical Bayes estimation of the $\gamma_g$ or $\gamma_g'$ is data-dependent 
+	and does not rely on subjective arguments. In addition, empirical Bayes 
+	estimation avoids (possibly complicated) hyperpriors on the $\gamma_g$
+	and $\gamma_g'$. A 
+	drawback is that we lose the uncertainty propagation property of the full 
+	Bayesian approach.
+	
+	Prior error variance/uniquenesses shapes $\kappa_{\bar{j}}$ and scale 
+	$\nu_{\bar{j}}$, and overall prior variance $\gamma$ are set to default values
+	to reflect a lack of prior 
+	knowledge. Our default choice of hyperparameters should take the
+	standardisation
+	of the data into account. Three postulates are used to select the
+	hyperparameters:
+	(i) we ensure that the prior expectation describes
+	a correlation matrix model, i.e., 
+	$\forall j: \E_{\bar{\mathbf{B}},\bar{\psi}_1
+	,\dots, \bar{\psi}_{\bar{p}}} (\bar{\mathbf{b}}_{\bar{j}}^{\text{T}} 
+  \bar{\mathbf{b}}_{\bar{j}} + {\bar{\psi}}_{\bar{j}}) = 1$. 
+  Furthermore, (ii) the prior contributions of the error and the latent 
+  structure to the data are assumed equal, i.e., 
+  $\forall j: \E_{\bar{\mathbf{B}},\bar{\psi}_1
+	,\dots, \bar{\psi}_{\bar{p}}} (\bar{\mathbf{b}}_{\bar{j}}^{\text{T}} 
+  \bar{\mathbf{b}}_{\bar{j}}) = \E_{\bar{\mathbf{B}},\bar{\psi}_1
+	,\dots, \bar{\psi}_{\bar{p}}} ({\bar{\psi}}_{\bar{j}}) = 1/2$.
+  Lastly, (iii) the prior uniqueness variance is set to 
+  $\mathbb{V}_{\bar{\mathbf{B}},\bar{\psi}_1
+	,\dots, \bar{\psi}_{\bar{p}}} ({\bar{\psi}}_{\bar{j}}) = 1$.
+	These three postulates together result in $\gamma = 1/d$, 
+	$\forall \bar{j}: \kappa_{\bar{j}}=9$, and 
+	$\forall \bar{j}: \nu_{\bar{j}}=4$. As a result,
+	$\forall {\bar{j}}: \mathbb{V}_{\bar{\mathbf{B}},\bar{\psi}_1
+	,\dots, \bar{\psi}_{\bar{p}}}(\mathbf{b}_j^{\text{T}}\mathbf{b}_j) = 1 + 
+	5/(2d)$. For $d$ large compared to $5/2$ (as one expects in high-dimensional
+	settings), we have $\mathbb{V}_{\bar{\mathbf{B}},\bar{\psi}_1
+	,\dots, \bar{\psi}_{\bar{p}}}(\mathbf{b}_j^{\text{T}}\mathbf{b}_j) \approx
+	1 = \mathbb{V}_{\bar{\mathbf{B}},\bar{\psi}_1
+	,\dots, \bar{\psi}_{\bar{p}}} ({\bar{\psi}}_{\bar{j}})$, so that the 
+	contributions to 
+	the prior variance of latent structure and error are approximately equal.
+	The methods described in this Section are implemented in the \texttt{R}
+	package \texttt{bayesfactanal} available from 
+	\url{https://github.com/magnusmunch/bayesfactanal}.
+	
+	\section{Simulations}\label{sec:simulations}
+	To assess the potential benefit of the proposed models in prediction of
+	outcome $y$ from features $\mathbf{x}$, 
+	a simulation is set up. The simulation setting is 
+	meant to demonstrate the potential benefit of (i) the Bayesian factor 
+	regression model in general, (ii) the inclusion of the feature structure 
+	through the empirical Bayes estimation of the $\gamma_g'$ as explained in 
+	Section \ref{sec:hyperparameters}, and (iii) the use of unlabeled features in
+	the estimation.
+	
+	To that end, $n=50$ labeled, 
+	and $m \in \{0, 50, 100, 200, 500 \}$ unlabeled observations are drawn from 
+	model (\ref{eq:model}) and standardised after simulation. 
+	Error variance and uniquenesses are set to 
+	$\sigma^2=1$ and $\forall j: \psi_j=1$. The number of features is fixed to
+	$p=100$. Two scenarios for the model parameters $b_{hj}$ and $\beta_h$ are 
+	considered:
+	\begin{enumerate}
+	  \item the number of factors are fixed to $d=10$. The $b_{hj}$ are set so 
+	    that each feature loads on two factors and factor is a part of 20
+	    features (see (\ref{eq:simulation}), where each $b$ denotes
+	    10 values and the empty cells are set to zero). $\beta_h$ is set so that 
+	    the outcome loads on all factors. 
+	    The features are divided in two groups 
+	    $\mathcal{G}_1 = \{1, \dots, 50 \}$ and 
+	    $\mathcal{G}_2 = \{51, \dots, 100 \}$.
+	    The non-zero $b_{hj}$ are 
+	    drawn from independent univariate centered Gaussian distributions. The 
+	    variances are $\mathbb{V}(b_{hj})=0.1$ for $j=1, \dots 50$, and
+	    $\mathbb{V}(b_{hj})=1$ for $j=51, \dots, 100$ The $\beta_h$ are 
+	    independent and drawn from the standard Gaussian distribution. 
+	  \item The second scenario fixes $d=40$. The model parameters $b_{hj}$ are 
+	    drawn from independent univariate centered Gaussian distributions. The 
+	    variances are $\mathbb{V}(b_{hj})=0.1$ for $j=1, \dots 50$, and
+	    $\mathbb{V}(b_{hj})=10$ for $j=51, \dots, 100$, i.e., the features are
+	    structured in two groups: $\mathcal{G}_1 = \{1, \dots, 50 \}$ and
+	    $\mathcal{G}_2 = \{51, \dots, 100 \}$. To ensure that
+	    the proportion of variance in $y$ explained with the factors is
+	    0.7, $\beta_h$ is set $\beta_h=0.483$.
+	\end{enumerate}
+	\begin{equation}\label{eq:simulation}
+	  \mathbf{B}=
+	  \left[
+      \begin{array}{ c c c c c:c c c c c}
+        b & &  &  &  &  &  &  &  & b\\ 
+        b & b &  &  &  &  &  &  &  & \\
+        & b & b &  &  &  &  &  &  & \\
+        &  & b & b & &  &  &  &  & \\
+        &  &  & b & b & &  &  &  & \\
+        &  &  &  & b & b &  &  &  & \\
+        &  &  &  &  & b & b &  &  & \\
+        &  &  &  &  &  & b & b & & \\
+        &  &  &  &  &  &  & b & b & \\
+        &  &  &  &  &  &  &  & b & b 
+      \end{array} 
+    \right]
+  \end{equation}
+	The first scenario models a situation where the features load on two factors 
+	only in such a way that the marginal correlation between features is weak. 
+	This might occur, for example, if genes are 
+	organised in
+	nearly disjoint functional networks, but the outcome is related to all the
+	networks. Ridge regression is expected to 
+	perform well here. With such a sparse loadings matrix, 
+	$(\mathbf{B}^{\text{T}}\mathbf{B} + \bm{\Psi})^{-1} \approx \mathbf{I}_p$.
+	That is, the information in $\mathbf{X}$ contributes little to the induced
+	regression coefficients $\tilde{\bm{\beta}}$. In addition, the induced
+	regression coefficients become
+	$\tilde{\bm{\beta}} \approx \mathbf{B}^{\text{T}} \bm{\beta} = 
+	\mathbb{C}\text{ov}(y, \mathbf{x})$, a (rescaled version of the) quantity 
+	that standard linear regression methods aim to estimate.
+	
+	The second scenario models a setting where all features load on all factors,
+	but the strength of the loading depends on the feature group. This might 
+	occur, for example, if genes are organised in several interconnected 
+	functional networks, but some network have weak connections. The outcome is 
+	again related to the all functional networks. In this setting, the
+	factor regression methods are expected to perform well. In contrast to the
+	first simulation, 
+	$(\mathbf{B}^{\text{T}}\mathbf{B} + \bm{\Psi})^{-1} \neq \mathbf{I}_p$,
+	so information on the induced regression coefficients $\tilde{\bm{\beta}}$ is
+	contained in $\mathbf{X}$. This results in increased effiency due to the 
+	inclusion of data. Also, $\tilde{\bm{\beta}}$, is a weighted version of
+	$\mathbb{C}\text{ov}(y, \mathbf{x})$ that is not straightforward to estimate
+	with standard linear regression methods.
+	
+	Six models are compared:
+	\begin{enumerate}
+	  \item Ridge regression with cross validated penalty parameter with the
+	    \texttt{R} package \texttt{glmnet} \cite[]{friedman_regularization_2010};
+	  \item Lasso regression with cross validated penalty parameter with the
+	    \texttt{R} \texttt{glmnet} package \cite[]{friedman_regularization_2010};
+	  \item a two-step factor regression method: (i) a penalized factor 
+	    model is estimated from the feature correlation matrix, with cross 
+	    validated penalty parameter.
+	    Next, (ii) outcomes are regressed on the feature factor scores 
+	    $\hat{\mathbb{E}}(\bm{\lambda}_i | \mathbf{x}_i)$ to obtain the prediction 
+	    rule. This approach was shown to work in \cite{peeters_stable_2019} and
+	    is implemented in the \texttt{R} \texttt{FMradio} package 
+	    \cite[]{peeters_fmradio_2019};
+	  \item a penalized factor regression model that includes unlabeled 
+	    observations, with cross validated penalty parameter, and estimated as in
+	    SM Section (\ref{sm-sec:mlestimation});
+	  \item the proposed Bayesian factor regression model (\ref{eq:prior}), 
+	    approximated with variational Bayes as in Section \ref{sec:estimation}. 
+	    The fixed hyperparameters are described in Section 
+	    \ref{sec:hyperparameters}. Note that this model does not include 
+	    external feature structure and therefore does not estimate the 
+	    $\gamma_g'$;
+	  \item the proposed empirical Bayesian factor regression model 
+	    (\ref{eq:prior}), approximated with variational Bayes as in Section 
+	    \ref{sec:estimation}. The hyperparameters are described in Section 
+	    \ref{sec:hyperparameters}, where we include the grouping of the features
+	    and estimate group-specific $\gamma_g'$ by empirical Bayes.
+	\end{enumerate}
+	For all models, the data are standardised before estimation, as is common
+	in most real data applications.
+	Models 3-6 allow for the inclusion of unlabeled features and are estimated
+	for a range of number of unlabeled features.
+	In addition, we 
+	% consider the true data-generating model $\tilde{\beta}$ and
+	fitted an intercept-only null model. We calculate estimation mean squared 
+	error
+	(EMSE) of $\tilde{\bm{\beta}}$, prediction mean squared error (PMSE),
+	and correlation between predictions and observations 
+	($\mathbb{C}\text{or}(y,\hat{y})$) on test data of size 
+	$n_{\text{test}}=1000$. Lower PMSE and EMSE indicate better performance, while
+	higher $\mathbb{C}\text{or}(y,\hat{y})$ indicates better performance.
+	The results, with the median taken
+	over 50 simulation replications, are displayed in Figures
+	\ref{fig:simulation1} and Figures 
+	\ref{fig:simulation2}, for scenarios 1 and 2, respectively.
+	
+<<simulation1, fig.cap="Simulation results for scenario 1 with median (a) EMSE and (b) PMSE, respectively.", out.width="100%", fig.asp=1/2>>=
+load(file="results/simulations_bayesfactreg_res3.Rdata")
+library(RColorBrewer)
+source(file="code/figures.R")
+simfig1(res19, methods=c("ridge", "lasso", "FMradio", "emfactanal", "vbfactanal", 
+                        "ebfactanal", "null"), m=c(0, 50, 100, 200, 500), 
+        measure="median", col=brewer.pal(n=11, name="Set3"), lwd=2, 
+        lty=c(rep(1, 3), NA, rep(1, 3)),
+        pch=c(rep(NA, 3), 4, rep(NA, 3)), legend=TRUE,
+        label=c("ridge", "lasso", "FMradio", "penalized", "Bayes",
+                "EBayes", "null"))
+@
+<<simulation2, fig.cap="Simulation results for scenario 2 with median (a) EMSE and (b) PMSE, respectively.", out.width="100%", fig.asp=1/2>>=
+load(file="results/simulations_bayesfactreg_res3.Rdata")
+library(RColorBrewer)
+source(file="code/figures.R")
+simfig1(res9, methods=c("ridge", "lasso", "FMradio", "emfactanal", "vbfactanal", 
+                        "ebfactanal", "null"), m=c(0, 50, 100, 200, 500), 
+        measure="median", col=brewer.pal(n=11, name="Set3"), lwd=2, 
+        pch=rep(4, 7), legend=TRUE,
+        label=c("ridge", "lasso", "FMradio", "penalized", "Bayes",
+                "EBayes", "null"))
+@
+
+  In both scenarios, the penalized factor regression model was not estimable
+  with unlabeled data, due to non-convergence. The two-step FMradio approach
+  also suffers from non-convergence with more unlabeled data, but was still 
+  estimable in some simulations, so it is included in the Figures.
+
+  In both scenarios estimation (i.e., EMSE) and prediction calibration 
+  (i.e., PMSE) of the Bayesian methods
+  initially improves with more unlabeled data. However, in scenario 1 it starts
+  deteriorating again after about $m=100$. Surprisingly, the opposite holds for 
+  FMradio. In scenario 2, where the performance continues to improve with 
+  more unlabeled data, the rate of improvement decreases with the number of
+  unlabeled observations. This is unsurprising, as estimators generally converge
+  at a similarly-shaped $\sqrt{n}$ rate. In both scenarios, discrimination 
+  (i.e., $\mathbb{C}\text{or}(y,\hat{y})$) keeps improving with the addition
+  of unlabeled features. For scenario 1, this is surprising, considering the
+  eventual deterioration in calibration and estimation.
+  
+  In scenario 1, the Bayesian methods outperform the frequentist methods for
+  almost all $m$ in terms of estimation and discrimination. Calibration is
+  worse for the Bayesian methods for small and large $m$, but better for medium
+  $m$. The two-step factor regression model FMradio, performs worse than the
+  Bayesian factor regression methods and ridge, only outperforming lasso.
+  In scenario 2, the frequentist methods outperform the Bayesian method for 
+  small $m$ in terms of estimation and calibration.
+  For medium $m$, the Bayesian methods outperform ridge, and eventally,
+  for large $m$, also lasso. FMradio outperforms all other methods in 
+  estimation, calibration, and discrimination. Scenario 2 simulates strong 
+  factors, that explain much of the data. Extraction of these factors 
+  in step one of the FMradio approach is therefore relatively easy. Estimation
+  of the prediction rule based on these strong factors in step two of FMradio
+  then results in a strong predictor.
+  
+  A comparison of full Bayes and empirical Bayes shows that the inclusion of 
+  the feature groupings helps in both estimation and prediction. In scenario 1,
+  empirical Bayes estimation and calibration is slightly better than full 
+  Bayes. Discrimination is about equal. In scenario 2 empirical clearly
+  outperforms full Bayes in all three performance measures.
+  Figures
+  \ref{fig:gamma1} and \ref{fig:gamma2} display the estimated 
+  $\log \hat{\gamma}'_g$ for the empirical Bayes model in scenarios 1 and 2,
+  respectively.
+  Both Figures show a clear influence of the feature grouping
+  on estimation, as the prior variances of the groups show a clear difference.
+  Furthermore, the influence of the feature grouping grows with the number
+  of unlabeled observations, as the diverging lines indicate.
+<<gamma1, fig.cap="Simulation results for scenario 1 with median $\\log \\hat{\\gamma}_g'$ estimated with empirical Bayes.", out.width="40%">>=
+load(file="results/simulations_bayesfactreg_res2.Rdata")
+library(RColorBrewer)
+source(file="code/figures.R")
+simfig2(res9, methods=c("ebfactanal"),
+        m=c(0, 50, 100, 200, 500), measure="median", lwd=2, 
+        cex.lab=2, cex.axis=2, cex=2,
+        legend=TRUE, labels=c("EBayes", "group 1", "group 2"),
+        legend.pos="right")
+@
+<<gamma2, fig.cap="Simulation results for scenario 2 with median $\\log \\hat{\\gamma}_g'$ estimated with empirical Bayes.", out.width="40%">>=
+load(file="results/simulations_bayesfactreg_res2.Rdata")
+library(RColorBrewer)
+source(file="code/figures.R")
+simfig2(res19, methods=c("ebfactanal"),
+        m=c(0, 50, 100, 200, 500), measure="median", lwd=2, 
+        cex.lab=2, cex.axis=2, cex=2,
+        legend=TRUE, labels=c("EBayes", "group 1", "group 2"),
+        legend.pos="right")
+@
+
+	\section{Applications}\label{sec:applications}
+	\subsection{Influenza vaccine}
+	The data described in this Section are from \cite{nakaya_systems_2011} and 
+	made publicly available through the NCBI GEO archive 
+	\cite[]{barrett_ncbi_2012} with accession numbers GSE29614 and GSE29617. 
+	The analysis mostly follows \cite{van_deun_obtaining_2018}, 
+	where a main aim was to predict vaccine efficacy with microarray gene
+	expression data. Here follows a short description of the data; 
+	for more details we refer the reader to
+	\cite{van_deun_obtaining_2018}.
+	
+	The data are from 9 and 26 subjects, observed in the 2007 and 2008 flu 
+	seasons, respectively. For all subjects there are three efficacy measures
+	from just before and 28 after vaccination available in the form of three
+	different plasma hemagglutination inhibition (HAI) antibody titers. The
+	antibody titers were combined by first taking the maximum of the three 
+	log-transformed titers and then substracting the measurements just before and
+	three days after vaccination. The scores were
+	standardised to mean zero and variance one.
+	In addition to the vaccine efficacy measures, there are 54,675 microarray gene 
+	expression measurements available from just before and three days after 
+	vaccination. The Robust Multichip Average (RMA) algorithm 
+	\cite[]{irizarry_exploration_2003} 
+	was used to pre-process the microarrays. After pre-processing, a change 
+	score was calculated by substracting the measurements just before and three
+	days after vaccination from each other. These scores were standardised to
+	mean zero and variance one. Before the analysis, a pre-selection
+	of 416 genes with highest coefficient of variation is made. 
+	The choice of 416 genes follows the analysis results of 
+	\cite{van_deun_obtaining_2018}. Here, we consider the 2007 data as unlabeled
+	and the 2008 data as labeled.  
+	
+	The application is an example of a difficult high-dimensional prediction 
+	problem, with little data available: a situation that regularly arises in 
+	practice. Here, the available unlabeled data potentially 
+	increases predictive performance signficicantly. Additionally, genes are often
+	considered to be organised in functional networks, so the factor model
+	is an appropriate choice and we expect the factor regression methods to
+	outperform classical linear regression methods.
+	
+	We estimate the same models as in Section \ref{sec:simulations}, 
+	with the exception of the empirical Bayes model, because there is no
+	grouping of the features available. To assess performance we
+	calculated cross-validated PMSE and $\mathbb{C}\text{or}(y,\hat{y})$ 
+	and display them in Table
+	\ref{tab:application1}, where null refers to the intercept only model.
+	The penalized factor regression model did not converge, so is not included 
+	in the results.
+<<application1>>=
+# load(file="results/analysis_expression_influenza_res1.Rdata")
+load(file="results/analysis_expression_influenza_filt416_res1.Rdata")
+time.influenza <- time[-c(3, 5)]
+tab <- cbind(pmse[!is.na(pmse)], pcor[!is.na(pmse)])[-3, ]
+tab <- round(tab, 3)
+tab[which(tab[, 1]==min(tab[, 1], na.rm=TRUE)), 1] <-
+  paste0("\\textbf{", tab[which(tab[, 1]==min(tab[, 1], na.rm=TRUE)), 1], "}")
+tab[which(tab[, 2]==max(tab[, 2], na.rm=TRUE)), 2] <-
+  paste0("\\textbf{", tab[which(tab[, 2]==max(tab[, 2], na.rm=TRUE)), 2], "}")
+colnames(tab) <- c("PMSE", "$\\mathbb{C}\\text{or}(y,\\hat{y})$")       
+rownames(tab) <- c("ridge", "lasso", "FMradio", "VBayes", "null")
+kableExtra::kable_styling(knitr::kable(
+  tab, align="r", digits=3,
+  caption="Cross-validated PMSE and $\\mathbb{C}\\text{or}(y,\\hat{y})$ (best performing in bold) calculated on the influenza vaccine data.",
+  format="latex", booktabs=TRUE, escape=FALSE),
+  latex_options=c("HOLD_position"))
+@
+	Table \ref{tab:application1} shows that the variational Bayesian factor 
+	regression that includes the unlabeled data outperforms the other methods in 
+	terms of calibration (i.e., PMSE) and discrimination 
+	(i.e., $\mathbb{C}\text{or}(y,\hat{y})$), according to expectation. The other
+	methods perform similarly in terms of PMSE, while lasso performance approaches 
+	the Bayesian factor regression in terms of $\mathbb{C}\text{or}(y,\hat{y})$.
+	
+	\subsection{Oral cancer lymph node metastasis}
+	In this Section, oral cancer lymph node metastasis is predicted with gene
+	expression data. RNAseqs, taken from TCGA 
+	\cite[]{the_cancer_genome_atlas_network_comprehensive_2015}, are measured on 
+	133 HPV-negative oral tumours taken from 76 and 57 oral cancer patients, with
+	and without lymph node metastasis, respectively. 
+	For more details on these data, see \cite{te_beest_improved_2017}.
+	Additional gene expressions are available from an independent 
+	microarray study on 97 oral cancer patients in
+	\cite{mes_prognostic_2017}. 
+	These microarrays are normalised to the same scale as
+  the RNAseqs and included in the analysis as unlabeled data.
+	A set of 871 genes with $p \leq 0.01$ in the microarray data is 
+	pre-selected.
+  To investigate the empirical Bayes estimation of the $\gamma_g$, the 
+	genes are divided in three groups, based on the cis-correlation between
+	between the RNAseq data and TCGA DNA copy numbers on the same patients, 
+	quantified by Kendall's $\tau$. 
+	% The procedure to group the features is
+	% described in \cite{munch_adaptive_2019}. 
+	
+	This Section investigates an example of a high-dimensional classification
+	problem in for which both unlabeled data and external feature
+	information is available. As before, genes are assumed to be organised in
+	functional networks, so we expect the factor regression methods to fit the
+	data well. We expect features with a large
+	positive correlation between RNAseqs and DNA copy number, as quantified by
+	Kendall's $\tau$, to be more important for metastasis prediction. We
+	therefore expect to estimate larger $\gamma_g'$ for the groups with
+	higher Kendall's $\tau$.
+	
+	We estimate the logistic extensions of the models estimated in Section 
+	\ref{sec:simulations}. To assess performance we
+	calculated a calibration measure Brier skill score (BSS) and discrimination 
+	measure area under the receiver operator curve (AUC)
+	on the unlabeled data and display them in Table
+	\ref{tab:application2}.
+	The penalized factor regression model did not converge, so is not included 
+	in the results.
+<<application2>>=
+load(file="results/rnaseq_oral_cancer_metastasis_res4.Rdata")
+time.oral <- time[-c(3, 6)]
+# time.oral <- time
+tab <- cbind(briers, auc)[-c(3, 6), ]
+tab <- round(tab, 3)
+tab[which(tab[, 1]==max(tab[, 1], na.rm=TRUE)), 1] <-
+  paste0("\\textbf{", tab[which(tab[, 1]==max(tab[, 1], na.rm=TRUE)), 1], "}")
+tab[which(tab[, 2]==max(tab[, 2], na.rm=TRUE)), 2] <-
+  paste0("\\textbf{", tab[which(tab[, 2]==max(tab[, 2], na.rm=TRUE)), 2], "}")
+colnames(tab) <- c("BSS", "AUC")       
+rownames(tab) <- c("ridge", "lasso", "FMradio", "VBayes", "EBayes")
+kableExtra::kable_styling(knitr::kable(
+  tab, align="r", digits=3,
+  caption="BSS and AUC (best performing in bold) calculated on the oral cancer lymph node metastasis data.",
+  format="latex", booktabs=TRUE, escape=FALSE),
+  latex_options=c("HOLD_position"))
+@
+  Surprisingly, the best performing model in terms of calibration (i.e., BSS) 
+  is the lasso. The Bayesian factor regression methods outperform the
+  other methods in terms of discrimination (i.e., AUC).
+  The estimated $\gamma_g'$ are $0.97$, $0.98$, and $1.01$ for the low-, 
+  medium-, and high cis-correlation groups, respectively. This small difference
+  in shrinkage leads to a marginal increase in predictive performance of the
+  empirical Bayes method compared to the full Bayes version.
+	% \subsection{Alzheimers disease}
+	% - check Perrakis and Mukherjee (2019) data
+	% - try metabolomics data
 	
 	\section{Discussion}\label{sec:discussion}
-
-	\section*{Software}
-	The method is available as an \texttt{R} package from 
-	\url{https://github.com/magnusmunch/netren/}.
+	This paper investigates a Bayesian factor regression model for high 
+	dimensional prediction and classification problems. It allows for the 
+	inclusion of unlabeled data and feature groupings to improve predictive
+	performance. Estimation is through a combination of variational and
+	empirical Bayes techniques. The approach is competitive with classical
+	ridge and lasso regression, as well as with more elaborate frequentist
+	factor modelling 
+	approaches such as penalized factor regression and the two-step factor 
+	\texttt{FMradio}. Simulations show that
+	the method is especially useful if the features are generated in 
+	dense, correlated networks. Two applications show that the method predicts
+	just as well, or better, than existing methods in real data settings.
 	
-	\section*{Supplementary Material}
-	Supplementary Material is available online from 
-	\url{https://github.com/magnusmunch/netren}. 
+	A technical advantage of the pursued factor modelling approach is the 
+	straightforward inclusion of unlabeled observations through the full 
+	likelihood approach. However, some caution regarding this approach is 
+	advised. For the full likelihood approach to return unbiased estimates,
+	the missing data mechanism is assumed to be at most missing at random (MAR). 
+	That is, the missingness possibly depends on the observed features, but not
+	on unobserved features. In the current setting, MAR implies that unobserved 
+	labels are not missing due to the value of the labels. We argue that in most 
+	applications, this is a reasonable assumption. In the examples above,
+	observations are unlabeled because they come from independent studies. 
+	Due to the independence, it is reasonable to assume that no relation
+	exists between not observing labels and the actual labels.
+	Another technical advantage of Bayesian modelling is the occurence of
+	convergence issues in frequentist models. Sections \ref{sec:simulations} and 
+	\ref{sec:applications} 
+	show that the frequentist factor models suffer from convergence 
+  issues if the number of labeled and/or unlabeled samples becomes large. 
+  More investigation is required to determine when and why these convergence
+  issues occur.
+  An inherent benefit of Bayesian modelling is the
+  uncertainty quantification that automatically comes with the Bayesian 
+  posterior. This allows for straightforward calculation of prediction 
+  intervals. We note that the uncertainty quantification in the current setting
+  requires a more thorough investigation.
 	
-	\section*{Reproducible Research}
-	All results and documents may be recreated from 
-	\url{https://github.com/magnusmunch/netren}.
+	More elaborate prior modelling of the factor 
+  loadings is possible through the $\gamma_j$. For example, a more sparse 
+  lasso model for the factor loadings introduces the hyperpriors:
+  $\gamma_j \sim \text{Exp}(\lambda_j)$. Feature grouping is then included by
+  parametrising $\forall j \in \mathcal{G}_g: \lambda_j = \lambda_g$, and
+  estimating the $\lambda_g$ with empirical Bayes. In general, 
+  such Gaussian scale mixture extensions of
+  the $\bar{\mathbf{B}}$ prior require the addition of one or more extra 
+  layers to the prior and one or more extra variational parameters to update 
+  during estimation. Some existing examples of sparse Bayesian
+  factor models are \cite{ferrari_bayesian_2020} and
+  \cite{carvalho_high-dimensional_2008}. Sparse factor models often simplify
+  the latent dimension estimation. In any case, latent dimension estimation is 
+  a topic that deserves more 
+  attention. Here, estimation is via a simple Kaiser criterion. More elaborate
+  methods are available in literature \cite[see, e.g.,][]{auerswald_how_2019}.
 	
-	\section*{Acknowledgements}
-	\textit{Conflict of Interest}: None declared.
-	
-	\section{Computations}
-	
-	\subsection{Bayesian model}
-	\begin{align*}
-	\pi(\bbeta)& \propto \prod_{g=1}^G \[ \prod_{j \in \mathcal{G}_g} \exp \(-\lambda_1 \sqrt{\lambda'_g} |\beta_j| \) \exp \( - \frac{\lambda_2 \lambda'_g}{2} \beta_j^2 \) \] \\
-	& \,\,\,\,\, \left\{ \prod_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} \exp \( - \gamma_1 \sqrt{\gamma'_{g}} |\beta_j - \beta_k| \) \exp \[ - \frac{\gamma_2 \gamma'_{g}}{2} (\beta_j - \beta_k)^2\] \right\} \\
-	& \propto \prod_{g=1}^G \left\{ \prod_{j \in \mathcal{G}_g} \sqrt{\lambda'_g} \int_0^{\infty} t^{-\frac{1}{2}} \exp \( -\frac{\lambda_1^2 \lambda'_g}{2} t \) \exp \[ -\frac{\beta_j^2}{2} (t^{-1} + \lambda_2 \lambda'_g)  \]  dt  \right\}  \\
-	& \,\,\,\,\, \vastt\{ \prod_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} \sqrt{\gamma'_g} \int_0^{\infty} s^{-\frac{1}{2}} \exp \( -\frac{\gamma_1^2 \gamma'_g}{2} s \) \\
-	& \,\,\,\,\, \cdot \exp \[ -\frac{(\beta_j - \beta_k)^2}{2} (s^{-1} + \gamma_2 \gamma'_g)  \]  ds \vastt\},
-	\end{align*}
-	where proportionality is with respect to the $\lambda'_g$, $\gamma'_g$, and $\beta_j$. Let $\tau = 1 + \lambda_2 \lambda'_{g} t$ and $\sigma = 1 + \gamma_2 \gamma'_{g} s$, then:
-	\begin{align*}
-	\pi(\bbeta) & \propto \prod_{g=1}^G \[ \prod_{j \in \mathcal{G}_g} \lambda'_g \int_1^{\infty} (\tau - 1)^{-\frac{1}{2}} \exp \( -\frac{\lambda_1^2}{2 \lambda_2} \tau \) \exp \( -\frac{\beta_j^2}{2} \lambda_2 \lambda'_g \frac{ \tau}{\tau - 1} \) d \tau \]  \\
-	& \,\,\,\,\, \vastt\{ \prod_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} \gamma'_g \int_1^{\infty} (\sigma - 1)^{-\frac{1}{2}} \\
-	& \,\,\,\,\, \cdot \exp \( -\frac{\gamma_1^2}{2 \gamma_2} \sigma \) \exp \[ -\frac{(\beta_j - \beta_k)^2}{2} \gamma_2 \gamma'_g \frac{ \sigma}{\sigma - 1} \] d \sigma \vastt\}.
-	\end{align*}
-	Let $\bbeta_g$ denote the $\beta_j$ for which $j \in \mathcal{G}_g$. We now have a joint prior in the model parameter $\bbeta$ and the latent parameters $\btau$ and $\bsigma$:
-	\begin{align*}
-	\pi(\bbeta, \bm{\tau}, \bm{\sigma}) & \propto \prod_{g=1}^G \[ \prod_{j \in \mathcal{G}_g} \lambda'_g (\tau_j - 1)^{-\frac{1}{2}} \exp \( -\frac{\lambda_1^2}{2 \lambda_2} \tau_j \) \] \\
-	& \,\,\,\,\, \cdot \[ \prod_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} \gamma'_g (\sigma_{jk} - 1)^{-\frac{1}{2}} \exp \( -\frac{\gamma_1^2}{2 \gamma_2} \sigma_{jk} \) \] \\
-	& \,\,\,\,\, \exp \[ -\frac{1}{2} \bbeta_g \tr \(\lambda_2 \lambda'_g \tilde{\T}_g + \gamma_2 \gamma'_g \tilde{\Sm}_g \) \bbeta_g \],
-	\end{align*}
-	with $\tilde{\T}_g = \diag [\tau_j/(\tau_j - 1)]$, for $j \in \mathcal{G}_g$, and
-	$$
-	(\tilde{\Sm}_g)_{jk} = \begin{cases}
-	\sum_{\substack{l \neq j: \\ \upsilon_j \sim \upsilon_l \\ \in \mathcal{E}_g}} \sigma_{jl}/(\sigma_{jl} - 1) & \text{if } j=k, \\
-	- \sigma_{jk}/(\sigma_{jk} - 1) & \text{if } \upsilon_j \sim \upsilon_k \in \mathcal{E}_g \text{ and } j \neq k, \\
-	0 & \text{otherwise}.
-	\end{cases}
-	$$
-	
-	The conditional prior for $\bbeta$ is now easily obtained as:
-	$$
-	\bbeta | \btau, \bsigma \sim \prod_{g=1}^G \mathcal{N} \( 0, \(\lambda_2 \lambda'_g \tilde{\T}_g + \gamma_2 \gamma'_g \tilde{\Sm}_g \)^{-1} \)
-	$$
-	and the prior for $\btau,\bsigma$ as:
-	\begin{subequations}\label{eq:unnormprior}
-		\begin{align}
-		\pi(\btau,\bsigma) & \overset{D}{\propto} \prod_{g=1}^G (\lambda')^{|\mathcal{G}_g|}_g (\gamma')^{|\mathcal{E}_g|}_g |\lambda_2 \lambda'_g \tilde{\T}_g + \gamma_2 \gamma'_g \tilde{\Sm}_g|^{-1/2}\\
-		& \cdot \[ \prod_{j \in \mathcal{G}_g} (\tau_j - 1)^{-\frac{1}{2}} \exp \( -\frac{\lambda_1^2}{2 \lambda_2} \tau_j \) \] \\
-		& \cdot \[ \prod_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} (\sigma_{jk} - 1)^{-\frac{1}{2}} \exp \( -\frac{\gamma_1^2}{2 \gamma_2} \sigma_{jk} \) \].
-		\end{align}
-	\end{subequations}
-	The normalising constant is given by:
-	\begin{align}
-	h& \(\lambda_1, \lambda_2, \gamma_1, \gamma_2, \lambda'_g, \gamma'_g\) = \[ \prod_{g=1}^G (\lambda'_g)^{-|\mathcal{G}_g|} (\gamma'_g)^{-|\mathcal{E}_g|}\] \nonumber\\
-	& \,\,\,\,\, \cdot \vastt( \int_{\btau} \int_{\bsigma} \vastt\{ \prod_{g=1}^G |\lambda_2 \lambda'_g \tilde{\T}_g + \gamma_2 \gamma'_g \tilde{\Sm}_g|^{-1/2}  \[ \prod_{j \in \mathcal{G}_g} (\tau_j - 1)^{-\frac{1}{2}} \exp \( -\frac{\lambda_1^2}{2 \lambda_2} \tau_j \) \] \nonumber \\
-	& \,\,\,\,\, \cdot \[ \prod_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} (\sigma_{jk} - 1)^{-\frac{1}{2}} \exp \( -\frac{\gamma_1^2}{2 \gamma_2} \sigma_{jk} \)\]  \vastt\} d\btau d\bsigma \vastt)^{-1} \nonumber \\
-	& = \[ \prod_{g=1}^G (\lambda'_g)^{-|\mathcal{G}_g|} (\gamma'_g)^{-|\mathcal{E}_g|} \] \cdot \[ \prod_{g=1}^G (\lambda'_g)^{\frac{|\mathcal{G}_g|}{2}} \] \nonumber \\
-	& \,\,\,\,\, \cdot \vastt( \int_{\btau} \int_{\bsigma} \vastt\{ \prod_{g=1}^G \left|\lambda_2 \tilde{\T}_g + \gamma_2 \frac{\gamma'_g}{\lambda'_g} \tilde{\Sm}_g\right|^{-1/2}  \[ \prod_{j \in \mathcal{G}_g} (\tau_j - 1)^{-\frac{1}{2}} \exp \( -\frac{\lambda_1^2}{2 \lambda_2} \tau_j \) \] \nonumber \\
-	& \,\,\,\,\, \cdot \[ \prod_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} (\sigma_{jk} - 1)^{-\frac{1}{2}} \exp \( -\frac{\gamma_1^2}{2 \gamma_2} \sigma_{jk} \)\] \vastt\} d\btau d\bsigma \vastt)^{-1} \nonumber \\
-	& = \[ \prod_{g=1}^G (\lambda'_g)^{-\frac{|\mathcal{G}_g|}{2}} (\gamma'_g)^{-|\mathcal{E}_g|} \] \cdot c \(\lambda_1, \lambda_2, \gamma_1, \gamma_2, \frac{\gamma'_g}{\lambda'_g}\). \label{eq:normconst}
-	\end{align}
-	By plugging this expression into the unnormalised prior expression in (\ref{eq:unnormprior}), we obtain the prior model as in (\ref{eq:tsprior1}) - (\ref{eq:tsprior3}).
-	
-	\subsection{Variational Bayes}
-	For the derivation of $q_{\bomega}^*(\bomega)$ we refer the reader to \cite{munch_adaptive_2018}. The rest of the derivations for the variational posterior are given below. To that end, let $\psi_j = \tau_j - 1$ and $\chi_{jk} = \sigma_{jk} - 1$. Furthermore, in the following, $\diag(\A_g)$, for some square matrix $\A$, with diagonal matrix with as diagonal blocks the matrices $\A_g$. Now:
-	\begin{align*}
-	q^*_{\bbeta}(\bbeta) & \propto \exp \left\{\log \L (\y | \bbeta) + \E_{\bomega} [\log \pi(\bomega | \bbeta)] + \E_{\btau, \mathbf{\sigma}} [\log \pi (\bbeta, \btau, \bm{\sigma})] \right\} \\
-	& \overset{D} = \mathcal{N} (\bmu, \bSigma), \\
-	q^*_{\bpsi}(\bpsi) & \propto \exp \{ \E_{\bbeta, \bm{\sigma}} [\log \pi (\bbeta, \btau, \bm{\sigma})]\} \\
-	& \propto \vast\{ \prod_{g=1}^G \[ \prod_{j \in \mathcal{G}_g} (\tau_j - 1)^{-1/2} \exp \( -\frac{\lambda_1^2}{2 \lambda_2} \tau_j \) \] \\
-	& \,\,\,\,\, \cdot \exp \[ -\frac{1}{2} \lambda_2 \lambda'_g \E_Q \( \bbeta_g \tr \tilde{\T}_g \bbeta_g\) \] \vast\} \\
-	& = \prod_{g=1}^G \prod_{j \in \mathcal{G}_g} (\tau_j - 1)^{-1/2} \exp \[ -\frac{\lambda_1^2}{2 \lambda_2} \tau_j - \frac{\lambda_2 \lambda'_{g}}{2} \E_Q(\beta_j^2) \frac{\tau_j}{\tau_j - 1} \]\\
-	& \propto \prod_{g=1}^G \prod_{j \in \mathcal{G}_g} \psi_j^{-1/2} \exp \( -\frac{1}{2} \left\{ \frac{\lambda_1^2}{\lambda_2} \psi_j + \frac{\lambda_2 \lambda'_{g(j)} [ \V_Q(\beta_j) + \E_Q(\beta_j)^2]}{\psi_j} \right\} \) \\
-	& \overset{D} = \prod_{g=1}^G \prod_{j \in \mathcal{G}_g} \mathcal{GIG} \(\frac{1}{2}, \frac{\lambda_1^2}{\lambda_2}, \eta_j\), \\
-	q^*_{\bchi}(\bchi) & \propto \exp \{ \E_{\bbeta, \btau} [\log \pi (\bbeta, \btau, \bm{\sigma})]\} \\
-	& \propto \vastt\{ \prod_{g=1}^G \[ \prod_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} (\sigma_{jk} - 1)^{-1/2} \exp \( - \frac{\gamma_1^2}{2 \gamma_2} \sigma_{jk} \) \] \\
-	& \,\,\,\,\, \cdot \exp \[ -\frac{1}{2} \gamma_2 \gamma'_g \E_Q \( \bbeta_k \tr \tilde{\Sm}_g \bbeta_g \) \] \vastt\} \\
-	& = \vastt( \prod_{g=1}^G \prod_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} (\sigma_{jk} - 1)^{-1/2} \\
-	& \,\,\,\,\, \cdot \exp \left\{ - \frac{\gamma_1^2}{2 \gamma_2} \sigma_{jk} - \frac{\gamma_2 \gamma'_g}{2} \E_Q \[(\beta_j - \beta_k)^2\] \frac{\sigma_{jk}}{\sigma_{jk} - 1} \right\} \vastt) \\
-	& \propto \prod_{g=1}^G \prod_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} \chi_{jk}^{-1/2} \exp \( - \frac{1}{2} \left\{ \frac{\gamma_1^2}{\gamma_2} \sigma_{jk} + \frac{\gamma_2 \gamma'_{g(jk)} \E_Q[(\beta_j - \beta_k)^2] }{\chi_{jk}} \right\} \) \\
-	& \overset{D} = \prod_{g=1}^G \prod_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} \mathcal{GIG} \(\frac{1}{2}, \frac{\gamma_1^2}{\gamma_2}, \zeta_{jk}\),
-	\end{align*}
-	with the following parameters:
-	\begin{subequations}\label{eq:varbayespar}
-		\begin{align}
-		\bSigma & = \left\{\X \tr \diag [\E_Q (\omega_i)] \X + \lambda_2 \diag [\lambda'_g \E_Q (\tilde{\T}_g)] + \gamma_2 \diag [\gamma'_g \E_Q ( \tilde{\Sm}_g)] \right\}^{-1}, \label{eq:Svarbayes}\\
-		\bmu & = \bSigma \X \tr \(\y - \frac{1}{2} \m \), \\
-		c_i & = \sqrt{\x_i \tr \V_Q(\bbeta) \x_i + [\x_i \tr \E_Q(\bbeta)]^2}, \label{eq:cvarbayes}\\
-		\eta_j & = \lambda_2 \lambda'_{g(j)} [\V_Q(\beta_j) + \E_Q(\beta_j)^2], \\
-		\zeta_{jk} & = \gamma_2 \gamma'_{g(jk)} [\E_Q (\beta_j)^2 + \E_Q (\beta_k)^2 - 2 \E_Q(\beta_j) \E_Q(\beta_k) \\
-		& \,\,\,\,\, + \V_Q(\beta_j) + \V_Q(\beta_k) - 2 \Cov_Q (\beta_j,\beta_k) ]. \label{eq:zvarbayes}
-		\end{align}
-	\end{subequations}
-	
-	The derivation for $\E_Q(\omega_i) = m_i \tanh(c_i/2)/(2ci_i)$ in (\ref{eq:Svarbayes}) given in \cite{munch_adaptive_2018}. The other two expectations in (\ref{eq:Svarbayes}) are calculated as follows:
-	\begin{align*}
-	\E_Q(\tilde{\T}_g) & = \diag \[ \E_Q \( \frac{\tau_{j(g)}}{\tau_{j(g)} - 1} \) \] = \I + \diag \[ \E_Q(\psi_{j(g)}^{-1}) \] \\
-	& = \I + \diag \[ \frac{\lambda_1}{\sqrt{\lambda \eta_{j(g)}}} \], \\
-	\E_Q(\tilde{\Sm}_g) & = \begin{cases}
-	\sum_{\substack{l \neq j: \\ \upsilon_j \sim \upsilon_l \\ \in \mathcal{E}_g}} \E_Q[\sigma_{jl}/(\sigma_{jl} - 1] & \text{if } j=k, \\
-	- \E_Q[\sigma_{jk}/(\sigma_{jk} - 1)] & \text{if } \upsilon_j \sim \upsilon_k \in \mathcal{E}_g \text{ and } j \neq k, \\
-	0 & \text{otherwise}
-	\end{cases} \\
-	& = \begin{cases}
-	\sum_{\substack{l \neq j: \\ \upsilon_j \sim \upsilon_l \\ \in \mathcal{E}_g}} \[1 + \E_Q(\chi_{jl}^{-1})\] & \text{if } j=k, \\
-	- 1 - \E_Q(\chi_{jl}^{-1}) & \text{if } \upsilon_j \sim \upsilon_k \in \mathcal{E}_g \text{ and } j \neq k, \\
-	0 & \text{otherwise}
-	\end{cases} \\
-	& = \begin{cases}
-	\text{deg}_j + \sum_{\substack{l \neq j: \\ \upsilon_j \sim \upsilon_l \\ \in \mathcal{E}_g}} \gamma_1(\gamma_2 \zeta_{jl})^{-1/2} & \text{if } j=k, \\
-	- 1 - \gamma_1(\gamma_2 \zeta_{jk})^{-1/2} & \text{if } \upsilon_j \sim \upsilon_k \in \mathcal{E}_g \text{ and } j \neq k, \\
-	0 & \text{otherwise}
-	\end{cases} \\
-	& = \Lm + \frac{\gamma_1}{\sqrt{\gamma_2}} \tilde{\Z}_g,
-	\end{align*}
-	where $\text{deg}_j$ denotes the degree of vertex $\upsilon_j$. The Gaussian expectations, variances, and covariances in (\ref{eq:cvarbayes}) to (\ref{eq:zvarbayes}) are trivial and therefore omitted. Plugging these derivations into (\ref{eq:varbayespar}) leads to the estimating equations in (\ref{eq:estequations}).
-	
-	\subsection{Approximate empirical-variational Bayes}\label{sec:apprempvarbayes}
-	We may ignore the prior dependency of $\btau, \bsigma$ to ease the empirical Bayes computations. To this end we lower bound the determinant in the integrand of the normalising constant: $|\lambda_2 \lambda'_g \tilde{\T}_g + \gamma_2 \gamma'_g \tilde{\Sm}_g| \geq |\lambda_2 \lambda'_g \tilde{\T}_g| + |\gamma_2 \gamma'_g \diag(\tilde{\Sm}_g)|$, such the that the normalising constant is equivalent to (\ref{eq:normconst}), except that now $c (\lambda_1, \lambda_2, \gamma_1, \gamma_2, \gamma'_g / \lambda'_g ) = c (\lambda_1, \lambda_2, \gamma_1, \gamma_2)$.
-	Because the integrand is non-negative for $\lambda_1, \lambda_2, \gamma_1, \gamma_2, \lambda'_g, \gamma'_g > 0$, this implicitly lower bounds the normalising constant and, as a consequence, the marginal likelihood. The estimating equation for $\blambda', \bgamma'$ is now:
-	\begin{align*}
-	\blambda'^{(k+1)},\bgamma'^{(k+1)} & = \underset{\blambda',\bgamma'}{\argmax} \sum_{g=1}^G \frac{|\mathcal{G}_g|}{2} \log \lambda'_g - \frac{\lambda_2}{2} \sum_{g=1}^G \lambda'_g d_g^{(k)} - \frac{\gamma_2}{2} \sum_{g=1}^G \gamma'_g  h_g^{(k)}.
-	\end{align*}
-	To ensure that overall penalisation is determined by the global penalty parameters $\lambda_1,\lambda_2, \gamma_1, \gamma_2$, we require additional constraints to hold:
-	\begin{align*}
-	\prod_{g=1}^G(\lambda'_g)^{|\mathcal{G}_g|}=1 \text{ and } \prod_{g=1}^G(\gamma'_g)^{|\mathcal{E}_g|}=1.
-	\end{align*}
-	
-	Under this constraint we can solve for $\bgamma'_g$ directly:
-	$$
-	\gamma'^{(k+1)}_g = \exp \[ \frac{\sum_{g=1}^G |\mathcal{E}_g| \(\log h_g^{(k)} - \log |\mathcal{E}_g|\)}{\sum_{g=1}^G |\mathcal{E}_g|} \] \cdot \frac{|\mathcal{E}_g|}{h_g^{(k)}},
-	$$
-	while we numerically solve the following convex problem:
-	\begin{align*}
-	\blambda'^{(k+1)} & = \underset{\blambda'}{\argmax} \sum_{g=1}^G \frac{|\mathcal{G}_g|}{2}  \log (\lambda'_g) - \frac{\lambda_2}{2} \sum_{g=1}^G \lambda'_g d^{(k)}_g \\
-	& \text{subject to } \prod_{g=1}^G (\lambda'_g)^{|\G(g)|} = 1.
-	\end{align*}
-	
-	\subsection{Frequentist generalized elastic net}
-	Let $\Lm = \Sm \Sm \tr$, $\y^* = \begin{bmatrix} \y \tr & \0_{1 \times 2p} \end{bmatrix} \tr$, $\X^* = \begin{bmatrix} \X \tr & \sqrt{\lambda_2} \I_{p \times p} & \sqrt{\gamma_2} \Sm_{p \times  |\mathcal{E}|}\end{bmatrix} \tr$, and $\D = \begin{bmatrix} \I_{p \times p} & (\gamma_1/\lambda_1) \Lm \end{bmatrix} \tr$, then (ignoring a trivial extension to pathway-specific penalty parameters) the solution to the generalized lasso problem:
-	$$
-	\hat{\bbeta} = \underset{\bbeta}{\argmax} \ell(\y^* | \X^*, \bbeta) - \lambda_1 \norm{\D \bbeta}_1
-	$$
-	gives the solution to the generalized elastic net problem in (\ref{eq:penlik}).
-	
-	\section{Linear regression and alternative formulation}
-	Let $y_{i}$, for $i=1, \dots, n$, denote continuous outcomes with $\x_i$ the
-	corresponding $p$-dimensional feature vectors. Furthermore, let 
-	$\bm{y} = \begin{bmatrix} y_1 & \cdots & y_n \end{bmatrix} \tr$ and 
-	$\X = \begin{bmatrix} \x_1 & \cdots & \x_n \end{bmatrix} \tr$. Throughout
-	the following, we assume that the $y_i$ are centred and the $\x_{ij}$
-	are standardised per feature, i.e., $\sum_{i=1}^n y_i =0$,
-	$\forall j: \sum_{i=1}^n x_{ij} =0$, and 
-	$\forall j: \sum_{i=1}^n x_{ij}^2 =0$. We consider the following Bayesian
-	linear regression model:
-	\begin{subequations}\label{eq:bayesmodel}
-  	\begin{align}
-  	  y_i | \bbeta, \sigma^2 & \sim \mathcal{N} \( \x_i \tr \bbeta, \sigma^2 \),
-  	  \\
-  	  \bbeta | \sigma^2, \bm{\psi}, \bm{\chi} & \sim \mathcal{N} \( 0,
-  	  \sigma^2 \[ \lambda_2 \bm{\Lambda}' +
-  	  \gamma_2 \sum_{g=1}^G \gamma_g' \mathbf{L}_g +
-  	  \lambda_2 \bm{\Lambda}' \diag \( \psi_j \) +
-  	  \gamma_2 \sum_{g=1}^G \gamma_g' \mathbf{L}^{\chi}_g \]^{-1} \), \\
-  	  \bm{\psi}, \bm{\chi} & \overset{D}{=} \det \[ \lambda_2 \bm{\Lambda}' +
-  	  \gamma_2 \sum_{g=1}^G \gamma_g' \mathbf{L}_g +
-  	  \lambda_2 \bm{\Lambda}' \diag \( \psi_j \) +
-  	  \gamma_2 \sum_{g=1}^G \gamma_g' \mathbf{L}^{\chi}_g \]^{-1/2} \\
-  	  & \cdot \[ \prod_{j=1}^p \psi_{j}^{-1/2} \exp \(- \frac{\lambda_1^2}
-  	  {2\lambda_2}
-  	  \psi^{-1}\) \] \cdot \[ \prod_{\substack{\upsilon_j \sim
-  	  \upsilon_l \\ \in \mathcal{E}}} \chi_{jk}^{-1/2}
-  	  \exp \( - \frac{\gamma_1^2}{2 \gamma_2} \chi_{jk}^{-1} \)\] \\
-  	  & \cdot \[ \prod_{g=1}^G (\lambda_g')^{\frac{|\mathcal{G}_g|}{2}}
-  	  c \(\lambda_1, \lambda_2, \gamma_1, \gamma_2, \gamma_g'/\lambda_g' \)\]
-  	  \cdot \[ \prod_{\substack{\upsilon_j \sim
-  	  \upsilon_l \\ \in \mathcal{E}}}
-  	  \mathbbm{1} \{\psi_j, \chi_{jk} > 0 \} \], \\
-  	  \sigma^2 & \sim 1/\sigma^3,
-  	\end{align}
-	\end{subequations}
-	where $\bm{\Lambda}'=\diag(\lambda_{g(j)}')$, and 
-	$(\mathbf{L}_g)_{p \times p}$ and 
-	$(\mathbf{L}^{\chi}_g)_{p \times p}$ denote the graph Laplacian
-	and weighted graph Laplacian of pathway $g$, respectively, with weights
-	$\chi_{jk}$ such that:
-	$$
-	(\mathbf{L}^{\chi}_g)_{jk} = 
-	\begin{cases}
-	  \sum_{\substack{l \neq j: \\ \upsilon_j \sim \upsilon_l \\ 
-	  \in \mathcal{E}_g}} \chi_{jl} & \text{if } j=k, \\
-	  - \chi_{jk} & \text{if } \upsilon_j \sim \upsilon_k \in \mathcal{E}_g, \\
-	  0 & \text{otherwise}.
-	\end{cases}
-	$$
-	
-	The MAP estimator of model (\ref{eq:bayesmodel}) corresponds to the following 
-	penalized regression estimator:
-  \begin{subequations}\label{eq:penmodel}
-		\begin{align}
-		  \hat{\bbeta} & := \underset{\bbeta}{\argmax} \ell(\y ; \bbeta) -
-		  \lambda_1 \sum_{g=1}^G \sqrt{\lambda'_g} 
-		  \sum_{j \in \mathcal{G}_g}  |\beta_j| - \frac{\lambda_2}{2} 
-		  \sum_{g=1}^G \lambda'_g \sum_{j \in \mathcal{G}_g}  \beta_j^2 \\
-		  & \,\,\,\, - \gamma_1 \sum_{g=1}^G \sqrt{\gamma'_g} 
-		  \sum_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} 
-		  |\beta_j - \beta_k| - \frac{\gamma_2}{2} 
-		  \sum_{g=1}^G \gamma'_g 
-		  \sum_{\substack{\upsilon_j \sim \upsilon_k \\ \in \mathcal{E}_g}} 
-		  (\beta_j - \beta_k)^2,
-		\end{align}
-	\end{subequations}
+	Lastly, we give some indication of computational times.
+	The proposed factor regression approaches are slower to estimate compared to
+	the other methods. Model estimation times for the influenza application are: 
+	\Sexpr{round(time.influenza, 2)[-4]}, and 
+	\Sexpr{round(time.influenza, 2)[4]} seconds, for the ridge, lasso,
+	FMradio, and Bayesian factor regression models, respectively. 
+	For the oral cancer metastasis appication we have
+	\Sexpr{round(time.oral, 2)[-c(3, 4, 5)]} and \Sexpr{round(time.oral, 2)[3]} 
+	seconds for the ridge, lasso and FMradio, and
+	\Sexpr{round(time.oral/60, 2)[4]} and \Sexpr{round(time.oral/60, 2)[5]} 
+	minutes for the variational and empirical Bayesian models.
+	Especially in the second application, the estimation is considerably slower.
+	However, we argue that these times are still manageable and much faster
+	than traditional MCMC estimation times.
 	
 	\bibliographystyle{author_short3} 
 	\bibliography{refs}

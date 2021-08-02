@@ -1,14 +1,14 @@
-Package: netren
+Package: bayesfactanal
 Type: Package
-Title: Graph-informed penalized regression
+Title: Semi-supervised empirical Bayes group-regularized factor regression
 Version: 0.0.0.9000
-Date: 2019-11-13
+Date: 2020-06-22
 Author: Magnus M. Münch
 Maintainer: Magnus M. Münch <m.munch@vumc.nl>
-Description: Graph-informed penalized regression
+Description: Semi-supervised empirical Bayes group-regularized factor regression
 Depends: R (>= 3.4.1)
 License: GPL (>= 2)
-Imports: Rcpp (>= 0.12.14)
+Imports: Rcpp (>= 0.12.14), mvtnorm, parallel, doParallel, foreach, BayesLogit
 LinkingTo: Rcpp, RcppArmadillo
 Suggests: knitr, testthat
 VignetteBuilder: knitr

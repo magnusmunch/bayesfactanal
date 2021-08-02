@@ -4,9 +4,10 @@ year <- sub(".*(2[[:digit:]]{3})-.*", "\\1", meta$Date, perl = TRUE)
 vers <- paste("R package version", meta$Version)
 
 citEntry(entry="Article",
-    title = "Joint estimation of univariate regressions",
+    title = "Semi-supervised empirical Bayes group-regularized factor regression",
     author = personList(as.person("M.M. Münch"),
                         as.person("M.A. van de Wiel"),
+                        as.person("A.W. van der Vaart"),
                         as.person("C.F. Peeters")),
     journal = "Unpublished manuscript",
     volume = "",
@@ -14,6 +15,6 @@ citEntry(entry="Article",
     pages =  "",
     year = "In preparation",
     textVersion =
-      paste("Münch, M.M., van de Wiel, M.A., Peeters, C.F. (in preparation). ", "Graph-informed penalized regression. ",
+      paste("Münch, M.M., van de Wiel, M.A., van der Vaart, A.W., Peeters, C.F. (in preparation). ", "Graph-informed penalized regression. ",
         	  "Unpublished manuscript.", sep = "")
 )

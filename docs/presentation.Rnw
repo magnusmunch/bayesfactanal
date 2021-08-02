@@ -1,0 +1,387 @@
+% set options
+<<settings, include=FALSE, echo=FALSE>>=
+opts_knit$set(root.dir="..", base.dir="../figs")
+opts_chunk$set(fig.align='center', fig.path="../figs/", 
+               echo=FALSE, cache=FALSE, message=FALSE, fig.pos='!ht')
+knit_hooks$set(document=function(x) {
+  sub('\\usepackage[]{color}', '\\usepackage{xcolor}', x, fixed=TRUE)})
+@
+
+% read figure code
+<<figures, include=FALSE>>=
+read_chunk("code/figures.R")
+@
+
+\documentclass[10pt,letterpaper]{beamer}
+\usepackage{amsfonts,bm,bbm,amsmath,booktabs,natbib}
+
+\usetheme{CambridgeUS}
+\usefonttheme{professionalfonts}
+
+\setbeamertemplate{sidebar right}{}
+
+\graphicspath{{../figs/}}
+
+\author[Magnus M\"unch]{Magnus M\"unch}
+\title[Semi-supervised (Bayesian) factor regression]
+{Semi-supervised (Bayesian) factor regression}
+\subtitle{Including unlabeled features and prior information}
+\institute[AUMC]{Amsterdam University Medical Centers}
+\date{\today}
+
+\begin{document}
+
+  \begin{frame}
+    \titlepage
+    \centering joint work with Mark van de Wiel, Aad van der Vaart, 
+    and Carel Peeters
+  \end{frame}
+  
+  \begin{frame}
+    \frametitle{Setting}
+    \begin{columns}
+      \begin{column}{0.5\linewidth}
+        \begin{figure}
+          \includegraphics[width=0.9\linewidth]{omicsdata.jpg}
+        \end{figure}
+        $$
+        p \gg n
+        $$
+      \end{column}
+      \begin{column}{0.5\linewidth}
+        \begin{itemize}
+          \item continuous outcomes
+          \item additional unlabelled features available from, e.g.,
+            \begin{itemize}
+              \item previous similar study
+              \item online repositories
+              \item drop-out subjects
+              \item ...
+            \end{itemize}
+        \end{itemize}
+      \end{column}
+    \end{columns}
+  \end{frame}
+  
+  \begin{frame}
+    \frametitle{Observational model}
+    \begin{itemize}
+      \item \textbf{Factor regression model} \\
+        $p$-dimensional features $\mathbf{x}_i$ and outcomes 
+        $y_i$, $i=1, \dots n$ follow:
+        \begin{align*}
+    	    y | \bm{\lambda} & \sim \mathcal{N} (\bm{\beta}^{\text{T}} 
+    	      \bm{\lambda}, \sigma^2) \\
+    	    \mathbf{x} | \bm{\lambda} & \sim \mathcal{N}_p ( \mathbf{B}^{\text{T}}
+    	      \bm{\lambda}, \bm{\Psi}) \\
+    	    \bm{\lambda} & \sim \mathcal{N}_d(\mathbf{0}, \mathbf{I}_d),
+    	  \end{align*}
+    	  where $\bm{\Psi}=\text{diag}(\psi_j)$, $j=1,\dots, p$ is assumed 
+    	  diagonal. 
+    	  \vspace{\baselineskip}
+  	  
+  	  \item \textbf{Predictions} \\
+    	  Predictions
+    	  $\mathbb{E}(y | \mathbf{x})= \bm{\beta}^{\text{T}} \mathbf{B} 
+    	  \left(\mathbf{B}^{\text{T}} \mathbf{B} + \bm{\Psi}\right)^{-1} 
+    	  \mathbf{x}=: \tilde{\bm{\beta}}^{\text{T}} \mathbf{x}$
+	  \end{itemize}
+  \end{frame} 
+  
+  \begin{frame}
+    \frametitle{Motivation}
+    \textbf{Why factor regression?}
+    \begin{enumerate}
+      \item some success with factor model for high dim. molecular features
+        \begin{itemize}
+          \item lower dimensional representation of features ($d \ll p$)
+          \item linear, so computations easy
+        \end{itemize}
+      \item predictions depend on $\mathbf{B}$ and $\bm{\Psi}$, so unlabelled
+        data improve estimation
+        \begin{itemize}
+          \item often labelled sample numbers low, but lots of unlabelled 
+            samples available
+        \end{itemize}
+    \end{enumerate}
+  \end{frame}
+  
+  \begin{frame}
+    \frametitle{Some notation}
+    We throw features and outcome together:
+    \begin{align*}
+      \bar{\mathbf{x}} & = \begin{bmatrix}\mathbf{x}^{\text{T}} & y
+        \end{bmatrix}^{\text{T}}, \\
+      \bar{\mathbf{B}}& =\begin{bmatrix}\mathbf{B} &
+        \bm{\beta}\end{bmatrix},\\
+      \bar{\bm{\Psi}}&=\begin{bmatrix}
+        \bm{\Psi} & \mathbf{0}_{p \times 1} \\
+        \mathbf{0}_{1 \times p} & \sigma^2
+        \end{bmatrix}
+    \end{align*}
+    and use the equivalent model:
+    \begin{align*}
+	    \bar{\mathbf{x}} & \sim \mathcal{N}_{p+1} (\bar{\mathbf{B}}^{\text{T}}
+	      \bm{\lambda}, \bar{\bm{\Psi}}), \\
+	    \bm{\lambda} & \sim \mathcal{N}_d(\mathbf{0}, \mathbf{I}_d).
+	  \end{align*}
+	  Implies:
+	  $$
+	  \bar{\mathbf{x}} \sim \mathcal{N}_{p+1}\left( \mathbf{0}, 
+	  \bar{\mathbf{B}}^{\text{T}}\bar{\mathbf{B}} + \bar{\bm{\Psi}} \right)
+	  $$
+  \end{frame}
+  
+  \begin{frame}
+    \frametitle{Unlabeled features}
+    \begin{itemize}
+      \item \textbf{Full likelihood approach} \\
+        We have extra $\mathbf{x}_i$, $i=n+1, \dots, n + m$ and the 
+        corresponding unobserved outcomes $z_i$, $i=n+1, \dots n + m$. Use full 
+        likelihood
+        $$
+        p(\mathbf{X}, \mathbf{z}, \mathbf{y} | \bar{\mathbf{B}}, 
+        \bar{\bm{\Psi}})
+        $$
+        and integrate out unobserved $\mathbf{z}$.
+        \vspace{\baselineskip}
+        
+      \item \textbf{Frequentist approach} \\
+        easy to solve with EM ($\theta=\{\bar{\mathbf{B}}, \bar{\bm{\Psi}} \}$): 
+        $$
+        \theta^{(k + 1)} = \underset{\theta}{\text{argmax} \,} 
+        \mathbb{E}_{\mathbf{z} | \mathbf{y}, \mathbf{X}, \theta^{(k)}} 
+        \left[\log p \left(\mathbf{z}, \mathbf{y}, \mathbf{X} | \theta
+        \right) \right],
+	      $$
+	      because $p(\mathbf{z} | \mathbf{y}, \mathbf{X}, \theta^{(k)})$ is 
+	      Gaussian.
+    \end{itemize}
+  \end{frame} 
+  
+  \begin{frame}
+    \frametitle{Simulation settings}
+    \begin{itemize}
+      \item $n=50$ labelled samples
+      \item $m \in \{0, 50, 100, 200, 500, 1000 \}$ unlabelled samples
+      \item fixed error variances $\sigma^2=1$ and $\psi_{j}=1$
+      \item number of factors $d=10$
+      \item number of features: $p \in \{20, 200 \}$ 
+      \item two scenarios for loadings $b_{hj}$:
+        \begin{enumerate}
+          \item Random centred Gaussian loadings $b_{dj}$
+          \item Fixed loadings, such that every feature loads on one factor
+            and outcome loads on all factors
+        \end{enumerate}
+        in both scenarios the (expected) explained variance of the
+        features by the latent variables is set to 0.5 and of the outcome to 0.9
+      \item compare with 
+        \begin{enumerate}
+          \item true parameters
+          \item cross validated ridge
+          \item FMradio \cite[]{peeters_stable_2019}: two-step factor analysis
+            approach
+        \end{enumerate}
+    \end{itemize}
+  \end{frame} 
+  
+  \begin{frame}
+    \frametitle{Results scenario 1 (random loadings)}
+<<simulation1, fig.cap="", fig.asp=0.6>>=
+load(file="results/simulations_bayesfactreg_small_res1.Rdata")
+
+simfig1 <- function(res, main="") {
+  emse <- list(
+    ridge=rep(apply(res$emse, 2, median, na.rm=TRUE)[
+      substr(colnames(res$emse), 1, 5)=="ridge"], 6),
+    factanal=apply(res$emse, 2, median, na.rm=TRUE)[
+      substr(colnames(res$emse), 1, 8)=="factanal"],
+    emfactanal=apply(res$emse, 2, median, na.rm=TRUE)[
+      substr(colnames(res$emse), 1, 10)=="emfactanal"])
+  plot(c(0, 50, 100, 200, 500, 1000), emse[[1]], type="l",
+     xlab="Number of unlabeled observations",
+     ylab="EMSE", main=main, ylim=range(emse), lty=2, col=2)
+  lines(c(0, 50, 100, 200, 500, 1000), emse[[2]], col=3)
+  lines(c(0, 50, 100, 200, 500, 1000), emse[[3]], col=4)
+}
+simfig2 <- function(res, main="") {
+  pmse <- list(
+    true=rep(apply(res$pmse, 2, median, na.rm=TRUE)[
+      substr(colnames(res$pmse), 1, 4)=="true"], 6),
+    ridge=rep(apply(res$pmse, 2, median, na.rm=TRUE)[
+      substr(colnames(res$pmse), 1, 5)=="ridge"], 6),
+    factanal=apply(res$pmse, 2, median, na.rm=TRUE)[
+      substr(colnames(res$pmse), 1, 8)=="factanal"],
+    emfactanal=apply(res$pmse, 2, median, na.rm=TRUE)[
+      substr(colnames(res$pmse), 1, 10)=="emfactanal"])
+  plot(c(0, 50, 100, 200, 500, 1000), pmse[[1]], type="l",
+       xlab="Number of unlabeled observations",
+       ylab="PMSE", main=main, ylim=range(pmse), lty=2, col=1)
+  lines(c(0, 50, 100, 200, 500, 1000), pmse[[2]], lty=2, col=2)
+  lines(c(0, 50, 100, 200, 500, 1000), pmse[[3]], col=3)
+  lines(c(0, 50, 100, 200, 500, 1000), pmse[[4]], col=4)
+}
+
+opar <- par(no.readonly=TRUE)
+par(mar=opar$mar*c(0.8, 1.3, 0.8, 1))
+layout(matrix(c(1:4), nrow=2, ncol=2, byrow=TRUE))
+simfig1(res1, main="EMSE, p=20")
+legend("topright", legend=c("true"), bg="white", lty=c(2), col=1)
+simfig2(res1, main="PMSE, p=20")
+legend("topright", legend=c("ridge"), bg="white", lty=c(2), col=2)
+simfig1(res3, main="EMSE, p=200")
+legend("topright", legend=c("FMradio"), bg="white", lty=c(1), col=3)
+simfig2(res3, main="PMSE, p=200")
+legend("topright", legend=c("EM"), bg="white", lty=c(1), col=4)
+par(opar)
+@
+  \end{frame}
+
+  \begin{frame}
+    \frametitle{Results scenario 2 (fixed loadings)}
+<<simulation2, fig.cap="", fig.asp=0.6>>=
+
+simfig1 <- function(res, main="") {
+  emse <- list(
+    ridge=rep(apply(res$emse, 2, median, na.rm=TRUE)[
+      substr(colnames(res$emse), 1, 5)=="ridge"], 6),
+    factanal=apply(res$emse, 2, median, na.rm=TRUE)[
+      substr(colnames(res$emse), 1, 8)=="factanal"],
+    emfactanal=apply(res$emse, 2, median, na.rm=TRUE)[
+      substr(colnames(res$emse), 1, 10)=="emfactanal"])
+  plot(c(0, 50, 100, 200, 500, 1000), emse[[1]], type="l",
+     xlab="Number of unlabeled observations",
+     ylab="EMSE", main=main, ylim=range(emse), lty=2, col=2)
+  lines(c(0, 50, 100, 200, 500, 1000), emse[[2]], col=3)
+  lines(c(0, 50, 100, 200, 500, 1000), emse[[3]], col=4)
+}
+simfig2 <- function(res, main="") {
+  pmse <- list(
+    true=rep(apply(res$pmse, 2, median, na.rm=TRUE)[
+      substr(colnames(res$pmse), 1, 4)=="true"], 6),
+    ridge=rep(apply(res$pmse, 2, median, na.rm=TRUE)[
+      substr(colnames(res$pmse), 1, 5)=="ridge"], 6),
+    factanal=apply(res$pmse, 2, median, na.rm=TRUE)[
+      substr(colnames(res$pmse), 1, 8)=="factanal"],
+    emfactanal=apply(res$pmse, 2, median, na.rm=TRUE)[
+      substr(colnames(res$pmse), 1, 10)=="emfactanal"])
+  plot(c(0, 50, 100, 200, 500, 1000), pmse[[1]], type="l",
+       xlab="Number of unlabeled observations",
+       ylab="PMSE", main=main, ylim=range(pmse), lty=2, col=1)
+  lines(c(0, 50, 100, 200, 500, 1000), pmse[[2]], lty=2, col=2)
+  lines(c(0, 50, 100, 200, 500, 1000), pmse[[3]], col=3)
+  lines(c(0, 50, 100, 200, 500, 1000), pmse[[4]], col=4)
+}
+
+opar <- par(no.readonly=TRUE)
+par(mar=opar$mar*c(0.8, 1.3, 0.8, 1))
+layout(matrix(c(1:4), nrow=2, ncol=2, byrow=TRUE))
+simfig1(res4, main="EMSE, p=20")
+legend("topright", legend=c("true"), bg="white", lty=c(2), col=1)
+simfig2(res4, main="PMSE, p=20")
+legend("topright", legend=c("ridge"), bg="white", lty=c(2), col=2)
+simfig1(res6, main="EMSE, p=200")
+legend("topright", legend=c("FMradio"), bg="white", lty=c(1), col=3)
+simfig2(res6, main="PMSE, p=200")
+legend("topright", legend=c("EM"), bg="white", lty=c(1), col=4)
+par(opar)
+@
+  \end{frame}
+  
+  \begin{frame}
+    \frametitle{Application}
+      \begin{itemize}
+        \item \textbf{Motivation} \\
+          Predict influenza vaccine efficacy
+        \item \textbf{Data}\cite[]{nakaya_systems_2011,barrett_ncbi_2012} \\
+          Influenze vaccine efficacy and expression of 54 675 genes for 9 and 26 
+          subjects from 2007 and 2008, respectively.
+        \item \textbf{Results} \\
+          Normalise data (RMA) and pre-select 416 features as in 
+          \cite{van_deun_obtaining_2018} and compare models:
+      \end{itemize}
+<<application1>>=
+load(file="results/analysis_expression_influenza_res1.Rdata")
+tab <- rbind(rsq, pmse)
+tab <- round(tab, 3)
+tab[1, which(tab[1, ]==max(tab[1, ], na.rm=TRUE))] <-
+  paste0("\\textbf{", tab[1, which(tab[1, ]==max(tab[1, ], na.rm=TRUE))], "}")
+tab[2, which(tab[2, ]==min(tab[2, ], na.rm=TRUE))] <-
+  paste0("\\textbf{", tab[2, which(tab[2, ]==min(tab[2, ], na.rm=TRUE))], "}")
+tab <- tab[, -c(2, 5)]
+rownames(tab) <- c("$R^2$", "PMSE")
+colnames(tab) <- c("ridge", "FMradio", "EM", "null")
+kableExtra::kable_styling(knitr::kable(
+  tab, align="r", digits=3,
+  caption="Cross-validated $R^2$ and PMSE (best performing in bold).",
+  format="latex", booktabs=TRUE, escape=FALSE),
+  latex_options=c("HOLD_position"))
+@
+  \end{frame} 
+  
+  \begin{frame}
+    \frametitle{Prior knowledge}
+    \begin{itemize}
+      \item in the form of partitioning of features into groups 
+        $\mathcal{G}_1, \dots, \mathcal{G}_G$
+        \begin{itemize}
+          \item known and published genes in genomics ($G=2$)
+          \item types of metabolite
+          \item based on ranking of $p$-values from previous study
+          \item pathways/networks of genes
+        \end{itemize}
+      \item might be informative for prediction problem
+      \item prior modelling of loadings $b_{hj}$ allows for inclusion of 
+        grouping
+    \end{itemize}
+  \end{frame} 
+  
+  \begin{frame}
+    \frametitle{Bayesian prior}
+    \begin{itemize}
+      \item we consider the prior:
+        \begin{align*}
+      	  \bar{\mathbf{B}} | \bar{\psi}_1, \dots, \bar{\psi}_{p+1} & 
+      	  \sim \prod_{j=1}^{p + 1} \mathcal{N}_{d}(\mathbf{0}_{d}, 
+      	  \bar{\psi}_{j} \gamma_{g(j)} \mathbf{I}_d), \\
+      	  \bar{\psi}_1, \dots, \bar{\psi}_{p+1} & \sim \prod_{j=1}^{p + 1} 
+      	  \Gamma^{-1}(\kappa_j, \nu_j),
+      	\end{align*}
+        with $g(j)$ the group of feature $j$. 
+      \item set $\kappa_j, \nu_j = 0.001$
+      \item estimate $\gamma_g$ by empirical Bayes
+      \item MCMC easy, but has bad mixing
+      \item Variational Bayes is reasonably fast to converge
+    \end{itemize}
+  \end{frame} 
+  
+  \begin{frame}
+    \frametitle{Issue: correlation matrix}
+    \begin{itemize}
+      \item prior model describes general covariance matrix
+      \item but omics data almost always normalised data
+      \item correlation matrix model:
+        $\text{diag}[\mathbb{V}(\bar{\mathbf{x}})] = 
+        \text{diag} (\bar{\mathbf{B}}^{\text{T}} \bar{\mathbf{B}} + 
+        \bar{\bm{\Psi}}) = \mathbf{I}_{p + 1} \iff
+        \bar{\psi}_j = 1 - \bar{\mathbf{b}}_j^{\text{T}} 
+        (\bar{\mathbf{b}}_j > 0)$
+      \item prior is elliptical truncated normal:
+        $$
+    	  \bar{\mathbf{B}} \sim \prod_{j=1}^{p}
+  	    \mathcal{N}_d(\mathbf{0}_{d \times 1}, \gamma_j \mathbf{I}_d) 
+  	    \mathbbm{1}\{ \bar{\mathbf{b}}_j^{\text{T}} \bar{\mathbf{b}}_j < 1 \}
+  	    $$
+  	  \item VB becomes tricky, so we use ad hoc approach: rescale posterior so 
+  	    that $\mathbb{E}
+  	    (\mathbf{B}^{\text{T}}\mathbf{B} + \bm{\Psi})$ is a correlation matrix
+    \end{itemize}
+  \end{frame} 
+  
+  \begin{frame}
+    \frametitle{References}
+    \bibliographystyle{author_short3} 
+    \bibliography{refs}
+  \end{frame} 
+  
+\end{document}

@@ -1,0 +1,1578 @@
+% set options
+<<settings, include=FALSE, echo=FALSE>>=
+opts_knit$set(root.dir="..", base.dir="../figs")
+opts_chunk$set(fig.align='center', fig.path="../figs/", 
+               echo=FALSE, cache=FALSE, message=FALSE, fig.pos='!ht')
+knit_hooks$set(document=function(x) {
+  sub('\\usepackage[]{color}', '\\usepackage{xcolor}', x, fixed=TRUE)})
+@
+
+% read figure code
+<<figures, include=FALSE>>=
+read_chunk("code/figures.R")
+@
+
+\documentclass[a4paper,hidelinks]{article}
+% \usepackage{url,bm,algorithm,algpseudocode,mathtools,bbm,pgfplotstable,bm,amsmath,amssymb,amsthm,amsfonts,graphics,graphicx,epsfig,rotating,caption,subcaption,natbib,appendix,titlesec,multicol,hyperref,verbatim,bbm,algorithm,algpseudocode,pgfplotstable,threeparttable, booktabs,mathtools,dsfont}
+\usepackage{bm,amsmath,amssymb,amsthm,amsfonts,graphics,graphicx,epsfig,
+rotating,caption,subcaption,natbib,appendix,titlesec,multicol,hyperref,verbatim,
+bbm,algorithm,algpseudocode,pgfplotstable,threeparttable,booktabs,mathtools,
+dsfont,parskip,xr,multirow}
+\externaldocument[md-]{manuscript}
+
+% vectors and matrices
+\newcommand{\bbeta}{\bm{\beta}}
+\newcommand{\btau}{\bm{\tau}}
+\newcommand{\bsigma}{\bm{\sigma}}
+\newcommand{\balpha}{\bm{\alpha}}
+\newcommand{\bomega}{\bm{\omega}}
+\newcommand{\bOmega}{\bm{\Omega}}
+\newcommand{\bSigma}{\bm{\Sigma}}
+\newcommand{\bkappa}{\bm{\kappa}}
+\newcommand{\btheta}{\bm{\theta}}
+\newcommand{\bmu}{\bm{\mu}}
+\newcommand{\bpsi}{\bm{\psi}}
+\newcommand{\bchi}{\bm{\chi}}
+\newcommand{\bgamma}{\bm{\gamma}}
+\newcommand{\bGamma}{\bm{\Gamma}}
+\newcommand{\blambda}{\bm{\lambda}}
+\newcommand{\bLambda}{\bm{\Lambda}}
+\newcommand{\bPsi}{\bm{\Psi}}
+\newcommand{\bphi}{\bm{\phi}}
+\newcommand{\Y}{\mathbf{Y}}
+\newcommand{\y}{\mathbf{y}}
+\newcommand{\X}{\mathbf{X}}
+\newcommand{\x}{\mathbf{x}}
+\newcommand{\I}{\mathbf{I}}
+\newcommand{\T}{\mathbf{T}}
+\newcommand{\Z}{\mathbf{Z}}
+\newcommand{\W}{\mathbf{W}}
+\renewcommand{\O}{\mathbf{O}}
+\newcommand{\B}{\mathbf{B}}
+\renewcommand{\H}{\mathbf{H}}
+\newcommand{\U}{\mathbf{U}}
+\newcommand{\D}{\mathbf{D}}
+\newcommand{\Vm}{\mathbf{V}}
+\newcommand{\rv}{\mathbf{r}}
+\newcommand{\A}{\mathbf{A}}
+\newcommand{\Q}{\mathbf{Q}}
+\newcommand{\Sm}{\mathbf{S}}
+\newcommand{\0}{\bm{0}}
+\newcommand{\tx}{\tilde{\mathbf{x}}}
+\newcommand{\hy}{\hat{y}}
+\newcommand{\tm}{\tilde{m}}
+\newcommand{\tkappa}{\tilde{\kappa}}
+\newcommand{\m}{\mathbf{m}}
+\newcommand{\C}{\mathbf{C}}
+\renewcommand{\v}{\mathbf{v}}
+\newcommand{\g}{\mathbf{g}}
+\newcommand{\s}{\mathbf{s}}
+\renewcommand{\c}{\mathbf{c}}
+\newcommand{\ones}{\mathbf{1}}
+\newcommand{\R}{\mathbf{R}}
+\newcommand{\rvec}{\mathbf{r}}
+\newcommand{\Lm}{\mathbf{L}}
+
+% functions and operators
+\renewcommand{\L}{\mathcal{L}}
+\newcommand{\G}{\mathcal{G}}
+\renewcommand{\P}{\mathcal{P}}
+\newcommand{\argmax}{\text{argmax} \,}
+\newcommand{\expit}{\text{expit}}
+\newcommand{\erfc}{\text{erfc}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\V}{\mathbb{V}}
+\newcommand{\Cov}{\mathbb{C}\text{ov}}
+\newcommand{\tr}{^{\text{T}}}
+\newcommand{\diag}{\text{diag}}
+\newcommand{\KL}{D_{\text{KL}}}
+\newcommand{\trace}{\text{tr}}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\appropto}{\mathrel{\vcenter{
+  \offinterlineskip\halign{\hfil$##$\cr
+    \propto\cr\noalign{\kern2pt}\sim\cr\noalign{\kern-2pt}}}}}
+\newcommand{\card}[1]{\text{card} \left( #1 \right)}
+\makeatletter
+\newcommand*{\defeq}{\mathrel{\rlap{%
+			\raisebox{0.3ex}{$\m@th\cdot$}}%
+		\raisebox{-0.3ex}{$\m@th\cdot$}}%
+	=}
+\makeatother
+
+% distributions
+\newcommand{\N}{\text{N}}
+\newcommand{\TG}{\text{TG}}
+\newcommand{\Bi}{\text{Binom}}
+\newcommand{\PG}{\text{PG}}
+\newcommand{\Mu}{\text{Multi}}
+\newcommand{\GIG}{\text{GIG}}
+\newcommand{\IGauss}{\text{IGauss}}
+\newcommand{\Un}{\text{U}}
+
+% syntax and readability
+\renewcommand{\(}{\left(}
+\renewcommand{\)}{\right)}
+\renewcommand{\[}{\left[}
+\renewcommand{\]}{\right]}
+\renewcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\makeatletter
+\newcommand{\vast}{\bBigg@{3}}
+\newcommand{\vastt}{\bBigg@{4}}
+\newcommand{\Vast}{\bBigg@{5}}
+\makeatother
+
+% settings
+\pgfplotsset{compat=1.16}
+\graphicspath{{../figs/}}
+\setlength{\evensidemargin}{.5cm} \setlength{\oddsidemargin}{.5cm}
+\setlength{\textwidth}{15cm}
+\title{Supplementary Material to: `Semi-supervised empirical Bayes group-regularized factor regression'}
+\date{\today}
+\author{Magnus M. M\"unch$^{1,2}$\footnote{Correspondence to: 
+\href{mailto:m.munch@amsterdamumc.nl}{m.munch@vumc.nl}}, Mark A. van de 
+Wiel$^{1,3}$, \\ Aad W. van der Vaart$^{2}$, and Carel F.W. Peeters$^{1,4}$}
+
+\begin{document}
+
+	\maketitle
+	
+	\noindent
+	1. Department of Epidemiology \& Data Science, Amsterdam UMC, VU University, 
+	PO Box 7057, 1007 MB Amsterdam, The Netherlands \\
+	2. Mathematical Institute, Leiden University, Leiden, The Netherlands \\
+	3. MRC Biostatistics Unit, Cambridge Institute of Public Health, Cambridge,
+	United Kingdom \\
+	4. Division of Mathematical \& Statistical Methods - Biometris, 
+	Wageningen University \& Research, Wageningen, The Netherlands
+	
+	\noindent\textbf{Keywords}: Empirical Bayes; Factor regression; 
+	High-dimensional data; Semi-supervised learning  
+	
+	\noindent\textbf{Software available from}: 
+	\url{https://github.com/magnusmunch/bayesfactanal}
+	
+	\section{Introduction}
+	This document contains Supplementary Material (SM) to the Main Document (MD)
+	titled `Semi-supervised empirical Bayes group-regularized factor regression'.
+	
+	\section{Model identifiability and determinancy}
+	\label{sec:modelunidentifiability}
+	Two issues arise from MD model (\ref{md-eq:model2}): (i) 
+	Rotational unidentifiability
+	and (ii) indeterminancy in the latent factors. Issue (i) becomes apparent if
+	we multiply the loadings with an orthogonal matrix $\mathbf{H}$ and consider 
+	the implied covariance matrix:
+	\begin{equation}\label{eq:rotation}
+	\mathbb{C}\text{ov}(\bar{\mathbf{x}}) = \bar{\mathbf{B}}^{\text{T}}
+	\bar{\mathbf{B}} + \bar{\bm{\Psi}} = 
+	(\mathbf{H}\bar{\mathbf{B}})^{\text{T}}(\mathbf{H}\bar{\mathbf{B}}) + 
+	\bar{\bm{\Psi}}.
+	\end{equation}
+	From (\ref{eq:rotation}) we see that any arbitrary orthogonal transformation
+	yields the same covariance. This indeterminancy is usually fixed by 
+	restricting
+	$\bar{\mathbf{B}} \bar{\bm{\Psi}}^{-1} \bar{\mathbf{B}}^{\text{T}}$ to a  
+	diagonal matrix during maximum likelihood
+	estimation. This restriction has no apparent interpretation, so to increase
+	the interpretability of the model, a \textit{post hoc} rotation of the 
+	loadings is often desirable. A popular choice is the orthogonal Varimax 
+	rotation, 
+	which maximises the sum of the variances of the squared loadings. 
+	Varimax rotation often leads to approximately sparse representations of 
+	features that benefit interpretability.
+	
+	Issue (ii), indeterminancy of latent factors, stems from the initial 
+	postulate $\mathbb{E}(\bm{\lambda}\bm{\lambda}^{\text{T}})=\mathbf{I}_d$. 
+	The predicted scores $\hat{\bm{\lambda}} = 
+	\mathbb{E}(\bm{\lambda} | \bar{\mathbf{x}})$
+	do not necessarily adhere to this postulate:
+	$$
+	\mathbb{E}(\hat{\bm{\lambda}}\hat{\bm{\lambda}}^{\text{T}}) = 
+	\bar{\mathbf{B}} ( \bar{\mathbf{B}}^{\text{T}} \bar{\mathbf{B}} + 
+	\bar{\bm{\Psi}})^{-1}
+	\bar{\mathbf{B}}^{\text{T}} \neq \mathbf{I}_d.
+	$$
+	However, we can generate a random variable $\mathbf{s}$, uncorrelated to 
+	$\bar{\mathbf{x}}$, and with expectation $\mathbf{0}_d$ and variance 
+	$\mathbf{I}_d$
+	to construct scores:
+	$$
+	\hat{\bm{\lambda}} = 
+	\bar{\mathbf{B}} ( \bar{\mathbf{B}}^{\text{T}} \bar{\mathbf{B}} + 
+	\bar{\bm{\Psi}})^{-1}
+	\bar{\mathbf{B}}^{\text{T}} + \[\mathbf{I}_d - 
+	\bar{\mathbf{B}} (\bar{\mathbf{B}}^{\text{T}}\bar{\mathbf{B}} + 
+	\bar{\bm{\Psi}})^{-1} \bar{\mathbf{B}}^{\text{T}}\]^{1/2}\mathbf{s},
+	$$
+	that do adhere to the postulate. Unfortunately, there are infinitely many 
+	choices
+  of $\mathbf{s}$, leading to an indeterminancy in the latent factors. A 
+  simple fix to
+  this indeterminancy is setting
+  $\bar{\bm{\Psi}} = n^{-1}[(\bar{\mathbf{X}}^{\text{T}} 
+  \bar{\mathbf{X}})^{-1} \circ \mathbf{I}_p]^{-1}$. 
+  
+	\section{Maximum likelihood estimation}\label{sec:mlestimation}
+	\subsection{Maximum likelihood}\label{sec:maximumlikelihood}
+	In the low-dimensional setting ($\bar{p} < n$), loadings $\bar{\mathbf{B}}$ 
+	and variances
+	$\bar{\psi}_1, \dots, \bar{\psi}_{\bar{p}}$ in MD model (\ref{md-eq:model2}) 
+	may be estimated by 
+	maximum likelihood. If we denote the parameters
+	by $\theta=\{ \bar{\mathbf{B}}, \bar{\psi}_1, \dots, \bar{\psi}_{\bar{p}} \}$, 
+	the maximum 
+	likelihood estimate is given by \cite[]{mardia_multivariate_1979}:
+	\begin{equation}\label{eq:mle}
+	  \hat{\theta} = \underset{\theta}{\argmax} \log|\bar{\bm{\Sigma}}^{-1}| -
+	  \text{tr}\( \bar{\bm{\Sigma}}^{-1} \bar{\mathbf{S}}\),
+	\end{equation}
+	where $\bar{\bm{\Sigma}}=\bar{\mathbf{B}}^{\text{T}}\bar{\mathbf{B}} + 
+	\bar{\bm{\Psi}}$, and
+	$\bar{\mathbf{S}} = n^{-1} \bar{\mathbf{X}}^{\text{T}}\bar{\mathbf{X}}$
+	is the empirical covariance matrix of $\bar{\mathbf{X}}$. The maximum 
+	likelihood estimation is 
+	implemented in the base \texttt{R} 
+	package \texttt{stats} as the \texttt{factanal} function.
+	
+	\subsection{Penalised maximum likelihood}
+	\label{sec:penalizedmaximumlikelihood}
+	In high dimensional settings, i.e., $\bar{p} > n$, the unique (up to 
+	rotation) maximum likelihood estimate of MD model (\ref{md-eq:model2}) does 
+	not exist. One solution is to penalise the
+	likelihood \cite[]{van_wieringen_ridge_2016}:
+	\begin{equation}\label{eq:penalisedmle}
+	  \hat{\theta} = \underset{\theta}{\argmax} \log|\bar{\bm{\Sigma}}^{-1} | - 
+	  (1 - \gamma) \text{tr}\( \bar{\bm{\Sigma}}^{-1} 
+	  \bar{\mathbf{S}}\) - 
+	  \gamma \text{tr} \(\bar{\bm{\Sigma}}^{-1} \bm{\Gamma}\),
+	\end{equation}
+	where $\gamma \in \(0, 1 \]$ is a penalty parameter that determines the 
+	amount of penalisation and $\bm{\Gamma}$ is a positive definite shrinkage 
+	target matrix, usually taken to be diagonal, or even the identity. Computing
+	(\ref{eq:penalisedmle}) is easily done via \texttt{factanal} in 
+	\texttt{R}, where the empirical covariance is replaced with its shrunken
+	estimate $(1 - \gamma) \bar{\mathbf{S}} + \gamma \bm{\Gamma}$. 
+	Common choices for target $\bm{\Gamma}$ are \cite[]{van_wieringen_ridge_2016}
+	$\bm{\Gamma}=\mathbf{I}_p$ and $\bm{\Gamma}$ diagonal with 
+	$\bm{\Gamma}_{jj}=\bar{\mathbf{S}}_{jj}$. A convenient and data-drive method 
+	to pick penalty parameter $\gamma$ is
+	$k$-fold cross validation, as described in \cite{peeters_stable_2019}. 
+	
+	The attentive reader may have noticed that the penalty in 
+	(\ref{eq:penalisedmle}) is not a proper penalty. The added penalty term is
+	$\gamma \text{tr}[ \bar{\bm{\Sigma}}^{-1} (\bm{\Gamma}- \bar{\mathbf{S}}) ]$, 
+	which does not necessarily penalise the likelihood if 
+	$\bm{\Gamma}-\bar{\mathbf{S}} > 0$ 
+	somewhere. It is however, a ``penalty'' 
+	with good empirical performance. In addition, it automatically models
+	a correlation matrix if both the empirical covariance and shrinkage targets
+	are proper correlation matrices.
+	
+	\subsection{Unlabeled features}\label{sec:unlabeled}
+	To incorporate the 
+	observed, unlabeled features $\mathbf{x}_i$, for $i=n + 1, \dots, n + m$, we 
+	treat the unobserved, corresponding responses $z_i$, for $i=n + 1, \dots, 
+	n + m$, as missing and employ an EM algorithm to incorporate them into 
+	the likelihood maximisation. Writing 
+	$\mathbf{z} = \begin{bmatrix} z_{n+1} & \cdots & z_{n+m}
+	\end{bmatrix}^{\text{T}}$ for the unobserved responses and 
+	$\theta^{(k)}=\{ \bar{\mathbf{B}}^{(k)}, \bar{\psi}_1^{(k)}, \dots,
+	\bar{\psi}_{\bar{p}}^{(k)}\}$
+	for the current parameter estimates, we have respective E- and M-steps:
+	\begin{subequations}\label{eq:em}
+	  \begin{align}
+	    Q(\theta | \theta^{(k)}) & = \mathbb{E}_{\mathbf{z} | \mathbf{y}, 
+	    \mathbf{X}} \[\log p \(\mathbf{z}, \mathbf{y}, \mathbf{X} \) | 
+	    \theta^{(k)} \], \label{eq:expectedloglikelihood}\\
+	    \theta^{(k + 1)} & = \underset{\theta}{\argmax} Q(\theta | \theta^{(k)}),
+	  \end{align}
+	\end{subequations}
+	which we iteratively apply until convergence of the expected log likelihood
+	(\ref{eq:expectedloglikelihood}). 
+	
+	The E-step in (\ref{eq:expectedloglikelihood}) is:
+	\begin{subequations}\label{eq:estep}
+	  \begin{align*}
+	    \mathbb{E}_{\mathbf{z} | \mathbf{y}, \mathbf{X}} 
+	    \[\log p \(\mathbf{z}, \mathbf{y}, \mathbf{X} \) | \theta^{(k)} \] \propto
+	    \sum_{i=1}^n \log p(y_i, \mathbf{x}_i | \theta^{(k)} ) +
+	    \sum_{i=n + 1}^{n + m} \mathbb{E}_{z_i | \mathbf{x}_i} 
+	    \[ \log p(z_i, \mathbf{x}_i | \theta^{(k)} ) \].
+	  \end{align*}
+	\end{subequations}
+	The first term is just the regular likelihood that is maximised in 
+	(\ref{eq:mle}). The second term may be written as:
+	\begin{align*}
+	  \sum_{i=n + 1}^{n + m} \mathbb{E}_{z_i | \mathbf{x}_i} 
+	  \[ \log p(z_i, \mathbf{x}_i | \theta^{(k)} ) \] & \propto 
+	  \log |\bar{\bm{\Sigma}}| - m^{-1} \sum_{i=n + 1}^{n + m} 
+	  \mathbb{E}_{z_i | \mathbf{x}_i} 
+	  \( \begin{bmatrix} \mathbf{x}_i \tr & z_i \end{bmatrix} 
+	  \bar{\bm{\Sigma}}^{-1} \begin{bmatrix} \mathbf{x}_i \tr & z_i 
+	  \end{bmatrix}^{\text{T}}\) \\
+	  & = \log |\bar{\bm{\Sigma}}| - 
+	  \text{tr} \[ \bar{\bm{\Sigma}}^{-1}
+	  m^{-1} \sum_{i=n + 1}^{n + m} \mathbb{E}_{z_i | \mathbf{x}_i} 
+	  \( \begin{bmatrix} \mathbf{x}_i \tr & z_i 
+	  \end{bmatrix}^{\text{T}} \begin{bmatrix} \mathbf{x}_i \tr & z_i 
+	  \end{bmatrix}\) \] \\
+	  & = \log |\bar{\bm{\Sigma}}| - \text{tr} \( \bar{\bm{\Sigma}}^{-1}
+	  \tilde{\mathbf{S}}_{-n}\),
+	\end{align*}
+	where we have written:
+	\begin{align*}
+	  \tilde{\mathbf{S}}_{-n} & = m^{-1} \sum_{i=n + 1}^{n + m} 
+	  \mathbb{E}_{z_i | \mathbf{x}_i} \( \begin{bmatrix} \mathbf{x}_i \tr & z_i 
+	  \end{bmatrix}^{\text{T}} \begin{bmatrix} \mathbf{x}_i \tr & z_i 
+	  \end{bmatrix}\) \\
+	  & = m^{-1} \sum_{i=n + 1}^{n + m} \[ \mathbb{E}_{z_i | \mathbf{x}_i} \(
+	  \begin{bmatrix} \mathbf{x}_i \tr & z_i \end{bmatrix}^{\text{T}} \)
+	  \mathbb{E}_{z_i | \mathbf{x}_i} \(
+	  \begin{bmatrix} \mathbf{x}_i \tr & z_i \end{bmatrix} \) +
+	  \mathbb{V}_{z_i | \mathbf{x}_i} \( 
+	  \begin{bmatrix} \mathbf{x}_i \tr & z_i \end{bmatrix}^{\text{T}} \) \] \\
+	  & = m^{-1} \( \tilde{\mathbf{X}}_{-n}^{\text{T}} \tilde{\mathbf{X}}_{-n} +
+	  \begin{bmatrix} \mathbf{0}_{p \times p} & \mathbf{0}_{p \times 1} \\
+	  \mathbf{0}_{1 \times p} & m \mathbb{V}_{z | \mathbf{x}} 
+	  (z | \theta^{(k)}) \end{bmatrix} \),
+	\end{align*}
+	with 
+	\begin{equation}\label{eq:expectation}
+	\tilde{\mathbf{X}}_{-n}^{\text{T}} = \begin{bmatrix} 
+	\mathbf{x}_{n+1}^{\text{T}} & \mathbb{E}_{z_{n+1} | \mathbf{x}_{n+1}}
+	(z_{n+1} | \theta^{(k)}) \\
+	\vdots & \vdots \\
+	\mathbf{x}_{n+m}^{\text{T}} & \mathbb{E}_{z_{n+m} | \mathbf{x}_{n+m}}
+	(z_{n+m} | \theta^{(k)}) \\
+	\end{bmatrix}.
+	\end{equation}
+	
+	Now if we combine this term with the regular likelihood term we have:
+	\begin{equation}\label{eq:expectedloglikelihood2}
+	  \mathbb{E}_{\mathbf{z} | \mathbf{y}, \mathbf{X}} 
+	  \[\log p \(\mathbf{z}, \mathbf{y}, \mathbf{X} \) | \theta^{(k)} \] \propto
+	  \log|\bar{\bm{\Sigma}}^{-1}| - \text{tr}\( \bar{\bm{\Sigma}}^{-1}
+	  \tilde{\mathbf{S}}\),
+	\end{equation}
+	where
+	\begin{equation}\label{eq:variance}
+	\tilde{\mathbf{S}} = (n + m)^{-1}\(\tilde{\mathbf{X}}^{\text{T}}
+	\tilde{\mathbf{X}} + \begin{bmatrix} 
+	\mathbf{0}_{p \times p} & \mathbf{0}_{p \times 1} \\
+	\mathbf{0}_{1 \times p} & m \mathbb{V}_{z | \mathbf{x}} 
+	(z | \theta^{(k)})\end{bmatrix}\),
+	\end{equation}
+	and
+	\begin{equation}
+	\tilde{\mathbf{X}} = \begin{bmatrix} 
+	\bar{\mathbf{X}} \\
+	\tilde{\mathbf{X}}_{-n}
+	\end{bmatrix}.
+	\end{equation}
+	The expectations and variance in (\ref{eq:expectation}) and 
+	(\ref{eq:variance}) are easily derived from the well-known relation between
+	the joint multivariate normal distribution in (\ref{md-eq:model2}) and the
+	corresponding conditional distributions:
+	\begin{subequations}
+	  \begin{align*}
+	  \mathbb{E}_{z_i | \mathbf{x}_i} 
+	    (z_i | \theta^{(k)}) & = \mathbf{x}_i^{\text{T}}
+	    \[(\mathbf{B}^{(k)})^{\text{T}}\mathbf{B}^{(k)}
+	    + \bm{\Psi}^{(k)}\]^{-1} (\mathbf{B}^{(k)})^{\text{T}}\bm{\beta}^{(k)}, \\
+	    \mathbb{V}_{z | \mathbf{x}} (z | \theta^{(k)}) & = 
+	    (\bm{\beta}^{(k)})^{\text{T}} \left\{ \mathbf{I}_d - 
+	    \mathbf{B}^{(k)} \[(\mathbf{B}^{(k)})^{\text{T}}\mathbf{B}^{(k)}
+	    + \bm{\Psi}^{(k)}\]^{-1} (\mathbf{B}^{(k)})^{\text{T}} \right\} 
+	    \bm{\beta}^{(k)}  + (\sigma^2)^{(k)}.
+	  \end{align*}
+	\end{subequations}
+	The M-step in (\ref{eq:expectedloglikelihood2}) is easily computed as before 
+	in (\ref{eq:mle}), using the \texttt{factanal} function in \texttt{R} with the
+	augmented empirical covariance $\tilde{\mathbf{S}}$ instead of 
+	$\bar{\mathbf{S}}$. The above is easily
+	generalised to include data with arbitrary missingness patterns.
+	
+	\section{Bayesian inference}
+	In this Section it is useful to note that the likelihood MD 
+	(\ref{md-eq:model2}) of i.i.d. Gaussian
+	data 
+	$\bar{\mathbf{X}} = \begin{bmatrix} \bar{\mathbf{x}}_1 & \cdots & 
+	\bar{\mathbf{x}}_n 
+	\end{bmatrix}^{\text{T}}$ may be rewritten as a product over densities of
+	columns $\bar{\mathbf{x}}_{\bar{j}}$, $\bar{j}=1, \dots, \bar{p}$, instead of 
+	the observations $\bar{\mathbf{x}}_i$, $i=1, \dots, n$, where we abuse 
+	notation to indicate column (and thus variable) $\bar{j}$ of 
+	$\bar{\mathbf{X}}$ by $\bar{\mathbf{x}}_{\bar{j}}$ and row 
+	(and thus observation) $i$ by $\bar{\mathbf{x}}_i$:
+	\begin{align}\label{eq:likelihood2}
+	  \prod_{i=1}^n p(\bar{\mathbf{x}}_i | \bm{\lambda}_i, \bar{\mathbf{B}}, 
+	    \bar{\psi}_1, \dots, \bar{\psi}_{\bar{p}}) = 
+	    \prod_{\bar{j}=1}^{\bar{p}} p(\bar{\mathbf{x}}_{\bar{j}} | \bm{\Lambda}, 
+	    \bar{\mathbf{b}}_{\bar{j}}, \bar{\psi}_{\bar{j}}),
+	\end{align}
+	with $\bm{\Lambda} = \begin{bmatrix} \bm{\lambda}_1 & \cdots & \bm{\lambda}_n
+	\end{bmatrix}^{\text{T}}$ and 
+	$$
+	p(\bar{\mathbf{x}}_{\bar{j}} | \bm{\Lambda}, \bar{\mathbf{b}}_{\bar{j}}, 
+	  \bar{\psi}_{\bar{j}}) \overset{D}{=}
+	  \mathcal{N}_n \( \bm{\Lambda} \bar{\mathbf{b}}_{\bar{j}}, \psi_{\bar{j}} 
+	  \mathbf{I}_n \).
+	$$
+	
+	\subsection{Gibbs sampling}\label{sec:gibbssampling}
+	This Section derives the full conditionals of the Bayesian model in 
+	(\ref{md-eq:model2}) and (\ref{md-eq:prior}). To that end, in this Section,
+	we include the unlabeled features and unobserved outcomes into 
+	$\bar{\mathbf{X}}$, i.e., 
+  $$
+  \bar{\mathbf{X}}_{(n+m) \times \bar{p}} = \begin{bmatrix}
+    \multicolumn{1}{c}{\multirow{2}{*}{$\mathbf{X}$}} & \mathbf{y} \\
+    \multicolumn{1}{c}{} & \mathbf{z}
+  \end{bmatrix}.
+  $$
+  In addition, we slightly abuse notation, write $\bar{\mathbf{x}}_i$ and
+  $\bar{\mathbf{x}}_j$ as the $i$th row and $j$th column of $\bar{\mathbf{X}}$,
+  respectively. Then, the full conditional for $\bm{\Lambda}$ is:
+	\begin{align*}
+	  p(\bm{\Lambda} | \bar{\mathbf{X}}, \bar{\mathbf{B}}, 
+  	  \bar{\psi}_1, \dots \bar{\psi}_{\bar{p}}) & \propto \prod_{i=1}^{n + m} 
+  	  p(\bar{\mathbf{x}}_i | \bm{\lambda}_i, \bar{\mathbf{B}}, \bar{\psi}_1, 
+  	  \dots \bar{\psi}_{\bar{p}}) \prod_{i=1}^{n + m} p(\bm{\lambda}_i) \\
+    & \propto \prod_{i=1}^{n + m} \exp \[ -\frac{1}{2} 
+      (\bar{\mathbf{x}}_i - \bar{\mathbf{B}}^{\text{T}} 
+      \bm{\lambda}_i)^{\text{T}} 
+      \bar{\bm{\Psi}}^{-1} (\bar{\mathbf{x}}_i - \bar{\mathbf{B}}^{\text{T}} 
+      \bm{\lambda}_i)
+      - \frac{1}{2}\bm{\lambda}_i^{\text{T}} \bm{\lambda}_i \] \\
+    & \propto \prod_{i=1}^{n + m} \exp \bigg\{ -\frac{1}{2} 
+      \[ \bm{\lambda}_i - (\bar{\mathbf{B}} \bar{\bm{\Psi}}^{-1} 
+      \bar{\mathbf{B}}^{\text{T}} + \mathbf{I}_d)^{-1} \bar{\mathbf{B}} 
+      \bar{\bm{\Psi}}^{-1} \bar{\mathbf{x}}_i\]^{\text{T}} \\
+    & \quad \quad \quad (\bar{\mathbf{B}} \bar{\bm{\Psi}}^{-1} 
+      \bar{\mathbf{B}}^{\text{T}} + \mathbf{I}_d)
+      \[ \bm{\lambda}_i - (\bar{\mathbf{B}} \bar{\bm{\Psi}}^{-1} 
+      \bar{\mathbf{B}}^{\text{T}} + \mathbf{I}_d)^{-1} \bar{\mathbf{B}} 
+      \bar{\bm{\Psi}}^{-1} \bar{\mathbf{x}}_i\] \bigg\},
+	\end{align*}
+	which allows us to write:
+	\begin{align}
+	  \bm{\Lambda} | \bar{\mathbf{X}}, \bar{\mathbf{B}}, 
+	  \bar{\psi}_1, \dots \bar{\psi}_{\bar{p}} & \sim \prod_{i=1}^{n + m} 
+	  \mathcal{N}_d
+	  \((\bar{\mathbf{B}} \bar{\bm{\Psi}}^{-1}\bar{\mathbf{B}}^{\text{T}} +
+	  \mathbf{I}_d)^{-1}\bar{\mathbf{B}}\bar{\bm{\Psi}}^{-1} \bar{\mathbf{x}}_i,
+	  (\bar{\mathbf{B}} \bar{\bm{\Psi}}^{-1}\bar{\mathbf{B}}^{\text{T}} +
+	  \mathbf{I}_d)^{-1}\). \label{eq:conditionalLambda}
+  \end{align}
+  
+  Next, we consider 
+  \begin{align*}
+	  p(\bar{\mathbf{B}} | \bar{\mathbf{X}}, \bm{\Lambda}, 
+  	  \bar{\psi}_1, \dots \bar{\psi}_{\bar{p}}) & \propto \prod_{i=1}^{n + m} 
+  	  p(\bar{\mathbf{x}}_i | \bm{\lambda}_i, \bar{\mathbf{B}}, \bar{\psi}_1, 
+  	  \dots \bar{\psi}_{\bar{p}}) \prod_{\bar{j}=1}^{\bar{p}} 
+  	  p(\bar{\mathbf{b}}_{\bar{j}} | \bar{\psi}_{\bar{j}}) \\
+  	& = \prod_{\bar{j}=1}^{\bar{p}} p(\bar{\mathbf{x}}_{\bar{j}} | 
+  	  \bm{\Lambda}, \bar{\mathbf{b}}_{\bar{j}}, \bar{\psi}_{\bar{j}})
+  	  p(\bar{\mathbf{b}}_{\bar{j}} | \bar{\psi}_{\bar{j}}) \\
+  	& \propto \prod_{\bar{j}=1}^{\bar{p}} 
+  	  \exp \[ \frac{\bar{\psi}_{\bar{j}}^{-1}}{2} 
+  	  (\bar{\mathbf{x}}_{\bar{j}} - \bm{\Lambda} 
+  	  \bar{\mathbf{b}}_{\bar{j}})^{\text{T}} (\bar{\mathbf{x}}_{\bar{j}} - 
+  	  \bm{\Lambda} \bar{\mathbf{b}}_{\bar{j}}) - 
+  	  \frac{\gamma_{\bar{j}}^{-1} \bar{\psi}_{\bar{j}}^{-1}}{2}
+  	  \bar{\mathbf{b}}_{\bar{j}}^{\text{T}} \bar{\mathbf{b}}_{\bar{j}} \] \\
+    & \propto \prod_{\bar{j}=1}^{\bar{p}} \exp \bigg\{ -\frac{1}{2} 
+      \[ \bar{\mathbf{b}}_{\bar{j}} - ( \bm{\Lambda}^{\text{T}}\bm{\Lambda} + 
+  	  \gamma^{-1}_{\bar{j}}\mathbf{I}_d)^{-1}
+  	  \bm{\Lambda}^{\text{T}} \bar{\mathbf{x}}_{\bar{j}}\]^{\text{T}} \\
+    & \quad \quad \quad 
+      \bar{\psi}_{\bar{j}}^{-1} (\bm{\Lambda}^{\text{T}}\bm{\Lambda} + 
+  	  \gamma^{-1}_{\bar{j}}\mathbf{I}_d) \[ \bar{\mathbf{b}}_{\bar{j}} - 
+  	  ( \bm{\Lambda}^{\text{T}}\bm{\Lambda} + 
+  	  \gamma^{-1}_{\bar{j}}\mathbf{I}_d)^{-1}
+  	  \bm{\Lambda}^{\text{T}} \bar{\mathbf{x}}_{\bar{j}}\] \bigg\},
+	\end{align*}
+	which gives
+	\begin{align}
+	\bar{\mathbf{B}} | \bar{\mathbf{X}}, \bm{\Lambda}, 
+	  \bar{\psi}_1, \dots \bar{\psi}_{\bar{p}} \sim \prod_{\bar{j}=1}^{\bar{p}}
+  	\mathcal{N}_{d} \( ( \bm{\Lambda}^{\text{T}}\bm{\Lambda} + 
+  	\gamma^{-1}_{\bar{j}}\mathbf{I}_d)^{-1}
+  	\bm{\Lambda}^{\text{T}} \bar{\mathbf{x}}_{\bar{j}},
+  	\bar{\psi}_{\bar{j}} (\bm{\Lambda}^{\text{T}}\bm{\Lambda} + 
+  	  \gamma^{-1}_{\bar{j}}\mathbf{I}_d)^{-1}\). \label{eq:conditionalB}
+	\end{align}
+	
+	For the $\bar{\psi}_{\bar{j}}$, we derive:
+	\begin{align*}
+	  p(\bar{\psi}_1, \dots \bar{\psi}_{\bar{p}} | \bar{\mathbf{X}}, \bm{\Lambda}, 
+  	  \bar{\mathbf{B}}) & \propto \prod_{i=1}^{n + m} 
+  	  p(\bar{\mathbf{x}}_i | \bm{\lambda}_i, \bar{\mathbf{B}}, \bar{\psi}_1, 
+  	  \dots \bar{\psi}_{\bar{p}}) \prod_{\bar{j}=1}^{\bar{p}} 
+  	  p(\bar{\mathbf{b}}_{\bar{j}} | \bar{\psi}_{\bar{j}})
+  	  p(\bar{\psi}_{\bar{j}}) \\
+  	& = \prod_{\bar{j}=1}^{\bar{p}} p(\bar{\mathbf{x}}_{\bar{j}} | 
+  	  \bm{\Lambda}, \bar{\mathbf{b}}_{\bar{j}}, \bar{\psi}_{\bar{j}})
+  	  p(\bar{\mathbf{b}}_{\bar{j}} | \bar{\psi}_{\bar{j}})
+  	  p(\bar{\psi}_{\bar{j}}) \\
+  	& \propto \prod_{\bar{j}=1}^{\bar{p}} 
+  	  \bar{\psi}_{\bar{j}}^{-(\frac{n + m + d}{2} + \kappa_{\bar{j}}) - 1} \\
+  	& \quad \quad \quad \exp \left\{ -\bar{\psi}_{\bar{j}}^{-1} \[\frac{1}{2} 
+  	   (\bar{\mathbf{x}}_{\bar{j}} - 
+  	  \bm{\Lambda}\bar{\mathbf{b}}_{\bar{j}})^{\text{T}}
+  	  (\bar{\mathbf{x}}_{\bar{j}} - 
+  	  \bm{\Lambda}\bar{\mathbf{b}}_{\bar{j}}) + \frac{\gamma^{-1}_{\bar{j}}}{2}
+  	  \bar{\mathbf{b}}_{\bar{j}}^{\text{T}}\bar{\mathbf{b}}_{\bar{j}} + 
+  	  \nu_{\bar{j}}\] \right\},
+	\end{align*}
+	to arrive at
+	\begin{align}
+	\bar{\psi}_1, \dots \bar{\psi}_{\bar{p}} | \bar{\mathbf{X}}, \bm{\Lambda}, 
+	  \bar{\mathbf{B}} \sim \prod_{\bar{j}=1}^{\bar{p}} 
+	  \Gamma^{-1}\(\frac{n + m + d}{2} + \kappa_{\bar{j}},
+	  \frac{1}{2}(\bar{\mathbf{x}}_{\bar{j}} - 
+	  \bm{\Lambda}\bar{\mathbf{b}}_{\bar{j}})^{\text{T}}
+	  (\bar{\mathbf{x}}_{\bar{j}} - 
+	  \bm{\Lambda}\bar{\mathbf{b}}_{\bar{j}}) + 
+	  \frac{\gamma_{\bar{j}}^{-1}}{2}\bar{\mathbf{b}}_{\bar{j}}^{\text{T}}
+	  \bar{\mathbf{b}}_{\bar{j}} + \nu_j \). \label{eq:conditionalPsi} 
+	\end{align}
+	
+	Given the latent variables and parameters, $z$ is independent of $\mathbf{x}$,
+	so the full conditional for the missing outcomes is equal to the likelihood:
+	\begin{align}\label{eq:conditionalLabels}
+	\mathbf{z} | \mathbf{X}, \bm{\Lambda}, \bar{\mathbf{B}},
+	  \bar{\psi}_1, \dots \bar{\psi}_{\bar{p}} \sim \prod_{i=n + 1}^{n + m} 
+	  \mathcal{N} (\bar{\mathbf{b}}_{\bar{p}}^{\text{T}} \bm{\lambda}_i, 
+	  \bar{\psi}_{\bar{p}}).
+	\end{align}
+  Using these full conditionals, samples from the posterior may be generated 
+  through a straightforward Gibbs sampling scheme.
+  
+  % \subsection{Variational inference}\label{sec:variationalinference}
+  % A mean-field variational Bayesian approximation of 
+  % the posterior minimises the Kullback-Leibler divergence of the posterior
+  % from the (approximate) variational posterior. For observed variables 
+  % $\mathbf{X}$, some partitioning of 
+  % unobserved variables $\bm{\theta} = \{ \theta_1, \dots, \theta_K \}$, and
+  % a assumed factorised approximate posterior: $p(\bm{\theta} | \mathbf{X}) \approx
+  % \prod_{k=1}^K q(\theta_k | \mathbf{X})$, this results in
+  % $q(\theta_k | \mathbf{X}) \propto
+  % \exp \{ \mathbb{E}_{\bm{\theta}_{-k} | \theta_k, \mathbf{X}} 
+  % \[ \log p( \theta_k | \bm{\theta}_{-k}, \mathbf{X}) \] \}$. 
+  % For $p( \theta_k | \bm{\theta}_{-k}, \mathbf{X})$ in 
+  % the exponential family, $q(\theta_k | \mathbf{X})$ is in the same exponential
+  % family with natural parameter: $\mathbb{E}_{\bm{\theta}_{-k} | \theta_k, 
+  % \mathbf{X}} \[ \eta (\bm{\theta}_{-k},\mathbf{X}) \]$, where 
+  % $\eta (\bm{\theta}_{-k},\mathbf{X})$ is the natural parameter of the full
+  % conditional. \cite[]{blei_variational_2017}.
+  % 
+  % For our purposes, we choose the
+  % posterior factorisation 
+  % $$
+  % p(\bm{\Lambda},\bar{\mathbf{B}},\bar{\psi}_1, \dots,
+  % \bar{\psi}_{p+1}, \mathbf{z} | 
+  % \mathbf{y}, \bar{\mathbf{X}}) \approx q(\bm{\Lambda})q(\bar{\mathbf{B}})
+  % q(\bar{\psi}_1, \dots, \bar{\psi}_{\bar{p}})q(\mathbf{z}),
+  % $$ 
+  % so that we have
+  % \begin{subequations}\label{eq:variationaldistributions}
+  %   \begin{align*}
+  %     q(\bm{\Lambda}) & \overset{D}{=} \prod_{i=1}^{n + m} \mathcal{N}_d 
+  %     (\bm{\phi}_i, \bm{\Xi}) \\
+  %     q(\bar{\mathbf{B}}) & \overset{D}{=} \prod_{\bar{j}=1}^{\bar{p}} 
+  %     \mathcal{N}_d (\bm{\mu}_{\bar{j}}, \bm{\Omega}_{\bar{j}})\\
+  %     q(\bar{\psi}_1, \dots, \bar{\psi}_{{\bar{p}}}) & \overset{D}{=} 
+  %     \prod_{{\bar{j}}=1}^{{\bar{p}}} \Gamma^{-1}
+  %     \(\frac{n + m + d}{2} + \kappa_{\bar{j}}, \zeta_{\bar{j}}\)\\
+  %     q(\mathbf{z}) & \overset{D}{=} \prod_{i=n + 1}^{n + m} \mathcal{N}
+  %     (\upsilon_{i}, \chi).
+  %   \end{align*}
+  % \end{subequations}
+  % For the derivation of the parameters we take the expectations of 
+  % the natural parameters of the conditional distributions in 
+  % (\ref{eq:conditionalLambda})-(\ref{eq:conditionalLabels}) and transform these new natural parameters 
+  % back to the parametrisations in (\ref{eq:variationaldistributions}). 
+  % This yields:
+  % \begin{subequations}
+  %   \begin{align}
+  %     \bm{\phi}_i & = \left\{ \sum_{\bar{j}=1}^{\bar{p}} \mathbb{E}
+  %     (\bar{\psi}_{j}^{-1}) 
+  %     \[\mathbb{V}(\bar{\mathbf{b}}_j) + \mathbb{E}(\bar{\mathbf{b}}_j) 
+  %     \mathbb{E}(\bar{\mathbf{b}}^{\text{T}}_j)\] + \mathbf{I}_d \right\}^{-1}
+  %     \mathbb{E}(\bar{\mathbf{B}}) \mathbb{E}(\bar{\bm{\Psi}}^{-1}) 
+  %     \tilde{\mathbf{x}}_i,\\ 
+  %     \bm{\Xi} & = \left\{ \sum_{j=1}^{p+1} \mathbb{E}(\bar{\psi}_{j}^{-1}) 
+  %     \[\mathbb{V}(\bar{\mathbf{b}}_j) + \mathbb{E}(\bar{\mathbf{b}}_j) 
+  %     \mathbb{E}(\bar{\mathbf{b}}_j^{\text{T}})\] + \mathbf{I}_d \right\}^{-1},\\
+  %     \bm{\mu}_j &= \[\mathbb{E}(\bm{\Lambda}^{\text{T}}\bm{\Lambda}) +
+  %     \gamma_{j}^{-1} \mathbf{I}_d\]^{-1}
+  %     \mathbb{E}(\bm{\Lambda}^{\text{T}})\tilde{\mathbf{x}}_j,\\
+  %     \bm{\Omega}_j & = \mathbb{E}(\psi_{j}^{-1})^{-1}
+  %     \[\mathbb{E}(\bm{\Lambda}^{\text{T}}\bm{\Lambda}) +
+  %     \gamma_{j}^{-1} \mathbf{I}_d\]^{-1},\\
+  %     \zeta_j & = \tilde{\mathbf{x}}_j^{\text{T}} \tilde{\mathbf{x}}_j/2 + 
+  %     \mathbbm{1}_{j=p+1} m\mathbb{V}(z)/2 - 
+  %     \mathbb{E}(\bar{\mathbf{b}}_j^{\text{T}})\mathbb{E}
+  %     (\bm{\Lambda}^{\text{T}})
+  %     \tilde{\mathbf{x}}_j + \text{tr}\[\mathbb{E}(\bm{\Lambda}^{\text{T}}
+  %     \bm{\Lambda})\mathbb{V}(\bar{\mathbf{b}}_j)\]/2 \\
+  %     & \,\,\,\,\,\, \,\,\, + \mathbb{E}(\bar{\mathbf{b}}_j^{\text{T}})
+  %     \mathbb{E}(\bm{\Lambda}^{\text{T}} \bm{\Lambda})
+  %     \mathbb{E}(\bar{\mathbf{b}}_j)/2 + \gamma_j^{-1}\mathbb{E}
+  %     (\mathbf{b}_j^{\text{T}})\mathbb{E}(\mathbf{b}_j)/2 +
+  %     \gamma_j^{-1}\text{tr}\[\mathbb{V}(\mathbf{b}_j)\]/2 + \nu_j, 
+  %     \label{eq:zeta} \\
+  %     \upsilon_{i} & = \mathbb{E}(\bar{\mathbf{b}}_{p+1}^{\text{T}})
+  %     \mathbb{E}(\bm{\lambda}_i),\\
+  %     \chi & = \mathbb{E}\[\bar{\psi}_{p+1}^{-1}\]^{-1},
+  %   \end{align}
+  % \end{subequations}
+  % where 
+  % $$
+  % \tilde{\mathbf{X}} = \begin{bmatrix}
+  %   \multicolumn{1}{c}{\multirow{2}{*}{$\mathbf{X}$}} & \mathbf{y} \\
+  %   \multicolumn{1}{c}{} & \mathbb{E}(\mathbf{z})
+  % \end{bmatrix}
+  % $$
+  % and the expectations and variances are as follows:
+  % \begin{align*}
+  %   \mathbb{E}(\bar{\psi}_{j}^{-1}) & = \[(n + m)/2 + \kappa_j\]/\zeta_j, \\
+  %   \mathbb{V}(\bar{\mathbf{b}}_j) & = \bm{\Omega}_j,\\
+  %   \mathbb{E}(\bar{\mathbf{b}}_j) & = \bm{\mu}_j, \\
+  %   \mathbb{E}(\bm{\Lambda}^{\text{T}} \bm{\Lambda}) & = (n + m) \bm{\Xi} + 
+  %   \bm{\Phi}^{\text{T}} \bm{\Phi},\\
+  %   \mathbb{E}(\bm{\Lambda}) & = \bm{\Phi}, \\
+  %   \mathbb{E}(z_{i}) & = \upsilon_{i},\\
+  %   \mathbb{V}(z) & = \chi,
+  % \end{align*}
+  % with $\bm{\Phi} = \begin{bmatrix} \bm{\phi}_1 & \cdots \bm{\phi}_n 
+  % \end{bmatrix}^{\text{T}}$.
+  
+  \subsection{Variational evidence lower bound}
+  Variational parameters are generally updated until convergence of
+  the evidence lower bound. Here we describe a general case of our
+  evidence lower bound, in which missingness
+  may be occur in all all variables (i.e., both response and features).
+  The number of missing values for feature $\bar{j}$ is indicated with 
+  $m_{\bar{j}}$.
+  Let $\tau_{\bar{j}} = (n/2 + d/2 + \kappa_{\bar{j}})/(2\zeta_{\bar{j}})$, then:
+  \begin{align*}
+    \text{ELBO}= & -\frac{np - \sum_{{\bar{j}}=1}^{\bar{p}} m_{\bar{j}}}{2} 
+      \log 2 \pi + 
+      \frac{nd + pn + dp + \sum_{{\bar{j}}=1}^{\bar{p}} m_{\bar{j}}}{2} \\
+    & + \sum_{{\bar{j}}=1}^{{\bar{p}}} \left[ \log \Gamma \( \frac{n + d}{2} +
+      \kappa_{\bar{j}} \) - \log \Gamma(\kappa_{\bar{j}}) - 
+      \frac{d}{2} \psi \(\frac{n + d}{2} + \kappa_{\bar{j}}\)
+      + \frac{d}{2}\log \gamma_{\bar{j}} + \kappa_{\bar{j}} 
+      \(1 + \log \nu_{\bar{j}} \) \right] \\
+    & + \sum_{{\bar{j}}=1}^{{\bar{p}}} \left[\frac{m_{\bar{j}}}{2} 
+      \log \chi_{\bar{j}} - \tau_{\bar{j}} m_{\bar{j}} \chi_{\bar{j}} -
+      \left( \frac{n - d}{2} + \kappa_{\bar{j}} \right) \log \zeta_{\bar{j}} 
+      - \frac{1}{2} \nu_{\bar{j}} \tau_{\bar{j}} \right] \\
+    & + \sum_{{\bar{j}}=1}^{\bar{p}} \[\frac{1}{2} 
+      \log |\bm{\Omega}_{\bar{j}}| -
+      \tau_{\bar{j}} \gamma_{\bar{j}}^{-1} \text{tr}\(\bm{\Omega}_{\bar{j}}\) - 
+      n \tau_{\bar{j}} \text{tr}\(\bm{\Xi}\bm{\Omega}_{\bar{j}}\) - 
+      \tau_{\bar{j}} \text{tr}\(\bm{\Phi}^{\text{T}}\bm{\Phi}
+      \bm{\Omega}_{\bar{j}}\)\] \\
+    & + 2 \text{tr} \[\text{diag} \( \tau_{\bar{j}} \) 
+      \tilde{\mathbf{X}}^{\text{T}} \bm{\Phi} \mathbf{M}\]
+      - n\text{tr} \[\text{diag} \( \tau_{\bar{j}} \) 
+      \mathbf{M}^{\text{T}}\bm{\Xi}\mathbf{M}\] -
+      \text{tr} \[\text{diag} \( \tau_j \gamma_{\bar{j}}^{-1} \) 
+      \mathbf{M}^{\text{T}}\mathbf{M}\] \\
+    & - \text{tr} \[\text{diag} \( \tau_{\bar{j}} \) 
+      \mathbf{M}^{\text{T}}\bm{\Phi}^{\text{T}}\bm{\Phi}\mathbf{M}\] -
+      \text{tr} \[\text{diag} \( \tau_{\bar{j}} \) 
+      \tilde{\mathbf{X}}^{\text{T}}\tilde{\mathbf{X}}\] \\  
+    & + \frac{n}{2} \log |\bm{\Xi}| - \frac{n}{2} \text{tr}( \bm{\Xi}) -
+      \frac{1}{2}\text{tr} \(\bm{\Phi}^{\text{T}} \bm{\Phi}\),
+  \end{align*}
+  where $\psi(x)$ denotes the digamma function and 
+  $\mathbf{M}=\begin{bmatrix} \bm{\mu}_1 & \cdots & \bm{\mu}_{{\bar{p}}} 
+  \end{bmatrix}$.
+  
+  % \subsection{Empirical Bayes}\label{sec:empiricalbayes}
+  % To estimate $\bm{\gamma} = \begin{bmatrix} \gamma_1 & \cdots & \gamma_G 
+  % \end{bmatrix}^{\text{T}}$ by empirical Bayes, we write
+  % $\theta = \{ \bar{\mathbf{B}}, \bar{\psi}_1, \dots, \bar{\psi}_{p+1}\}$ and 
+  % apply the following EM steps
+  % until convergence \cite[see][]{casella_empirical_2001}:
+  % $$
+  % \bm{\gamma}^{(k + 1)} = \underset{\bm{\gamma}}{\argmax} 
+  % \mathbb{E}_{ \theta | \mathbf{y}} \[\log p(\bar{\mathbf{B}} | 
+  % \bar{\psi}_1, \dots, \bar{\psi}_{p+1} ) | 
+  % \bm{\gamma}^{(k)} \].
+  % $$
+  % The difficult expectation here is replaced with an approximate variational 
+  % version, such that we have:
+  % $$
+  % \bm{\gamma}^{(k + 1)} = \underset{\bm{\gamma}}{\argmax}
+  % - \frac{1}{2} \sum_{g=1}^G \gamma_g^{-1} 
+  % \sum_{j \in \mathcal{G}_g} \mathbb{E}(\bar{\psi}_j^{-1}) 
+  % \left\{ \text{tr} \[ 
+  % \mathbb{V}(\bar{\mathbf{b}}_j)\] + \mathbb{E}(\bar{\mathbf{b}}_j^{\text{T}})
+  % \mathbb{E}(\bar{\mathbf{b}}_j) \right\} - \frac{d}{2} 
+  % \sum_{g=1}^{G} |\mathcal{G}_g| \log \gamma_{G}
+  % $$
+  % as our iterations. This gives empirical Bayes updates:
+  % Bayes updates:
+  % $$
+  % \gamma_g^{(k + 1)} = \frac{\sum_{j \in \mathcal{G}_g} 
+  % \mathbb{E}(\bar{\psi}_j^{-1}) \left\{ \text{tr} \[ 
+  % \mathbb{V}(\bar{\mathbf{b}}_j)\] + \mathbb{E}(\bar{\mathbf{b}}_j^{\text{T}})
+  % \mathbb{E}(\bar{\mathbf{b}}_j) \right\}}{|\mathcal{G}_g| d}.
+  % $$
+  
+  \subsection{Posterior expectation}\label{sec:posteriorexpectation}
+	In the (variational) Bayesian model, the prediction rule 
+	$\mathbb{E}(\tilde{y} | \tilde{\mathbf{x}})$ is not available in closed-form. 
+	In the MD, we approximate it with Monte Carlo simulations from the posterior.
+	This is generally fast, because it requires sample from multivariate 
+	Gaussian and inverse Gamma distributions, for which fast sampling algorithms
+	are available.
+	
+	Alternatively, one may approximate the expectation with a truncated Taylor 
+	series. If we denote $\theta = \{ \mathbf{B}, 
+	\bm{\beta}, \bm{\psi}_1, \dots, \psi_p \}$ and $g(\theta) = 
+	\tilde{\mathbf{x}}^{\text{T}}(\mathbf{B}^{\text{T}}\mathbf{B} + 
+	\bm{\Psi})^{-1} \mathbf{B}^{\text{T}} \bm{\beta}$, a second order Taylor 
+	approximation around the variational posterior mean of the parameters is:
+	\begin{align*}
+	  \mathbb{E}(\tilde{y} | \tilde{\mathbf{x}}) & = \mathbb{E}\left[g(\theta)
+	    \right] \\
+	  & \approx g\left[\mathbb{E}(\theta) \right] + 
+	    \frac{1}{2} \text{tr} \[ \frac{\partial^2 g(\theta)}{\partial \theta^2}
+	    \bigg|_{\theta=\mathbb{E}(\theta)} \mathbb{V}(\theta)\].
+	\end{align*}
+	The mean-field assumption and form of the variational posterior allow us to 
+	write:
+	\begin{align}\label{eq:taylor}
+	  \mathbb{E}(\tilde{y} | \tilde{\mathbf{x}}) & \approx 
+	    g\left[\mathbb{E}(\theta) \right] + 
+	    \frac{1}{2} \sum_{j=1}^p \text{tr} \[ \frac{\partial^2 g(\theta)}
+	    {\partial \mathbf{b}_j \partial \mathbf{b}_j^{\text{T}}}
+	    \bigg|_{\mathbf{b}_j=\mathbb{E}(\mathbf{b}_j)} 
+	    \mathbb{V}(\mathbf{b}_j)\] + \frac{1}{2} \sum_{j=1}^p 
+	    \[ \frac{\partial^2 g(\theta)}{\partial \psi_j^2}
+	    \bigg|_{\psi_j=\mathbb{E}(\psi_j)} \mathbb{V}(\psi_j)\],
+	\end{align}
+	where we have used that 
+	$$
+	\frac{\partial^2 g(\theta)} 
+	{\partial \bm{\beta} \partial \bm{\beta}^{\text{T}}} = \mathbf{0}.
+	$$
+	The derivative in the third term of the right-hand side of (\ref{eq:taylor}) 
+	is given by:
+	$$
+	\frac{\partial^2 g(\theta)}{\partial \psi_j^2} = 
+	2 \tilde{\mathbf{x}}^{\text{T}} [(\mathbf{B}^{\text{T}}\mathbf{B} + 
+	\bm{\Psi})^{-1}]_{jj} [(\mathbf{B}^{\text{T}}\mathbf{B} + 
+	\bm{\Psi})^{-1}]_j^{\text{T}} [(\mathbf{B}^{\text{T}}\mathbf{B} + 
+	\bm{\Psi})^{-1}]_j \mathbf{B}^{\text{T}} \bm{\beta},
+	$$
+	so that we can write:
+	$$
+	\frac{1}{2} \sum_{j=1}^p \[ \frac{\partial^2 g(\theta)}{\partial \psi_j^2}
+	\bigg|_{\psi_j=\mathbb{E}(\psi_j)} \mathbb{V}(\psi_j)\] = 
+	\tilde{\mathbf{x}}^{\text{T}} \mathbf{B}^{\text{T}} \bm{\beta} 
+	\text{tr} \left\{ \text{diag} \[ (\mathbf{B}^{\text{T}}\mathbf{B} + 
+	\bm{\Psi})^{-1} \] (\mathbf{B}^{\text{T}}\mathbf{B} + 
+	\bm{\Psi})^{-2} \text{diag} [\mathbb{V}(\psi_j)]\right\}.
+	$$
+	The trace involving the derivatives with respect to $\mathbf{b}_j$ in
+	the second term in the right-hand side (\ref{eq:taylor}) is a bit 
+	more involved. We write $\mathbf{E} = (\mathbf{B}^{\text{T}}\mathbf{B} + 
+	\bm{\Psi})^{-1}$ and only retain the non-zero parts when deriving
+	with respect to $\mathbf{b}_j$:
+	\begin{align*}
+	\partial^2 g(\theta) = 2 \tilde{\mathbf{x}}^{\text{T}} \Big[ &
+	\mathbf{E} (\partial \mathbf{B})^{\text{T}}
+	\mathbf{B} \mathbf{E} (\partial \mathbf{B})^{\text{T}} \mathbf{B} \mathbf{E} 
+	\mathbf{B}^{\text{T}}
+	+ 2 \mathbf{E} \mathbf{B}^{\text{T}}
+	(\partial \mathbf{B}) \mathbf{E} (\partial \mathbf{B})^{\text{T}} \mathbf{B} 
+	\mathbf{E} \mathbf{B}^{\text{T}} \\
+	+ & 2 \mathbf{E} (\partial \mathbf{B})^{\text{T}}
+	\mathbf{B} \mathbf{E} \mathbf{B}^{\text{T}} (\partial \mathbf{B}) \mathbf{E} 
+	\mathbf{B}^{\text{T}} 
+	+ 2 \mathbf{E} \mathbf{B}^{\text{T}}
+	(\partial \mathbf{B}) \mathbf{E} \mathbf{B}^{\text{T}} (\partial \mathbf{B}) 
+	\mathbf{E} \mathbf{B}^{\text{T}} \\
+	- & 2 \mathbf{E} (\partial \mathbf{B})^{\text{T}}
+	(\partial \mathbf{B}) \mathbf{E} \mathbf{B}^{\text{T}}
+	- 2 \mathbf{E} (\partial \mathbf{B})^{\text{T}}
+	\mathbf{B} \mathbf{E} (\partial \mathbf{B})^{\text{T}}
+	- 2 \mathbf{E} \mathbf{B}^{\text{T}}
+	(\partial \mathbf{B}) \mathbf{E} (\partial \mathbf{B})^{\text{T}} 
+	\Big] \bm{\beta}.
+	\end{align*}
+	Straightforward derivation of$\mathbf{B}$ with respect to $\mathbf{b}_j$ then 
+	gives a very messy expression, which we do not show here.
+	Plugging into (\ref{eq:taylor}), together with 
+	$g[\mathbb{E}(\theta)] = 
+	\tilde{\mathbf{x}}^{\text{T}}(\mathbf{B}^{\text{T}}\mathbf{B} + 
+	\bm{\Psi})^{-1} \mathbf{B}^{\text{T}} 
+	\bm{\beta}|_{\theta=\mathbb{E}(\theta)}$, results in a fast approximation
+	method for $\mathbb{E}(\tilde{y} | \tilde{\mathbf{x}})$ that is linear
+	in $\tilde{\mathbf{x}}$.
+  
+  \subsection{Bayesian inference for correlation matrix}\label{sec:correlation}
+  This Section considers two approaches to modelling a correlation matrix
+  instead of a general covariance matrix.
+  
+	\subsubsection{Proper correlation modelling}
+	We observe $n$ observations on $p$ standardised variables $\mathbf{x}$, 
+	i.e., $\sum_{i=1}^n x_{ij} = 0, n^{-1} \sum_{i=1}^n x^2_{ij} = 1$, 
+	$j=1, \dots, p$. The standardisation implies that we should model
+	the correlation matrix instead of the covariance matrix. 
+	Write $\bm{\Psi} = \diag(\psi_j)$, for the diagonal matrix with 
+	unique variances $\psi_j$, $j=1, \dots, p$ on the diagonal, 
+	$\mathbf{B}_{d \times p}$ for
+	the matrix of factor loadings, $\lambda$ for a vector of $d$ latent 
+	variables and consider the observational factor model:
+	\begin{subequations}\label{eq:model}
+  	\begin{align}
+  	  \mathbf{x} | \bm{\lambda}, \mathbf{B}, \psi_1, \dots, \psi_p, & \sim 
+  	    \mathcal{N}_p \(\mathbf{B}^{\text{T}} \bm{\lambda}, \bm{\Psi} \), \\
+  	  \bm{\lambda} & \sim \mathcal{N}_d \(\mathbf{0}_{d \times 1}, 
+  	    \mathbf{I}_d\).
+  	\end{align}
+	\end{subequations}
+	Model (\ref{eq:model}) induces a marginal covariance matrix:
+	$$
+	\mathbb{V}(\mathbf{x}) = \mathbf{B}^{\text{T}} \mathbf{B} + \bm{\Psi},
+	$$
+	which is a non-degenerate correlation matrix if we require
+	$\forall j: \psi_j = 1 - \mathbf{b}_j^{\text{T}} \mathbf{b}_j > 0$.
+	
+	We now consider the Bayesian prior
+	\begin{align}\label{eq:prior}
+	  \mathbf{B}, \psi_1, \dots, \psi_p & \sim \prod_{j=1}^{p}
+	    \mathcal{N}_d(\mathbf{0}_{d \times 1}, \gamma_j \mathbf{I}_d) 
+	    \mathbbm{1}\{ \mathbf{b}_j^{\text{T}} \mathbf{b}_j < 1 \}
+	    \delta \(\psi_j - 1 + \mathbf{b}_j^{\text{T}} \mathbf{b}_j \).
+	\end{align}
+	This prior is a product of priors over variables $j=1, \dots, p$, with
+	each variable $j$ prior itself a product of a multivariate normal for
+	$\mathbf{b}_j$, truncated to a unit ball and a (degenerate) Dirac 
+	distribution for $\psi_j$. Introduction of the latent variables
+	$\psi_j$ results in tractable (approximate) posterior computations, as will 
+	become clear later on. To see that prior
+	(\ref{eq:prior}) results in a model for a correlation matrix, we use 
+	(\ref{eq:likelihood2}) to integrate
+	the joint distribution of data and prior over the $\psi_j$:
+	\begin{align*}
+	  \int_{\psi_1} \cdots \int_{\psi_p} &
+	    \prod_{i=1}^n p(\mathbf{x}_i | \bm{\lambda}_i, \mathbf{B}, \psi_1, \dots, 
+	    \psi_p) p(\mathbf{B}, \psi_1, \dots, \psi_j) d\psi_1 \cdots d\psi_j \\
+	  & = \prod_{j=1}^p \int_{\psi_j} 
+	    p(\mathbf{x}_j | \bm{\Lambda}, \mathbf{b}_j, \psi_j) 
+	    p(\mathbf{b}_j, \psi_j) d\psi_j 
+	  = \prod_{j=1}^p p(\mathbf{x}_j | \bm{\Lambda}, \mathbf{b}_j) 
+	    p(\mathbf{b}_j) \\
+	  & = \prod_{i=1}^n p(\mathbf{x}_i | \bm{\lambda}_i, \mathbf{B})
+	    p(\mathbf{B}),
+	\end{align*}
+	where $p(\mathbf{x}_i | \bm{\lambda}_i, \mathbf{B})$ corresponds to the
+	observational model (\ref{eq:model}) with 
+	$\forall j: \psi_j = 1 - \mathbf{b}_j^{\text{T}} \mathbf{b}_j$ and the
+	prior 
+	$$
+	p(\mathbf{B}) \overset{D}{=} \prod_{j=1}^p
+	  \mathcal{N}_d(\mathbf{0}_{d \times 1}, \gamma_j \mathbf{I}_d) 
+	  \mathbbm{1}\{ \mathbf{b}_j^{\text{T}} \mathbf{b}_j < 1 \}
+	$$ 
+	is truncated to the unit ball to ensure a non-degenerate correlation matrix.
+	
+	A mean-field approximation to the posterior of model (\ref{eq:model}) and 
+	(\ref{eq:prior}) is 
+	$$
+	p(\bm{\Lambda},\mathbf{B},\psi_1, \dots, \psi_p | \mathbf{X}) \approx
+	  q(\bm{\Lambda})q(\mathbf{B})q(\psi_1, \dots, \psi_p),
+	$$
+	such that the Kullback-Leibler divergence of the posterior
+  from the (approximate) variational posterior is minimised.
+	Here, a slight abuse of notation allows $q$ to refer to 
+	different functions depending on the input variable. 
+	In general, in mean-field variational Bayes with parameters 
+	$\bm{\theta} = \{ \theta_1, \dots, \theta_K \}$, data $\mathbf{X}$, 
+  and an assumed factorised approximate posterior: 
+  $p(\bm{\theta} | \mathbf{X}) \approx \prod_{k=1}^K q(\theta_k | \mathbf{X})$, 
+  results in
+  $q(\theta_k | \mathbf{X}) \propto
+  \exp \{ \mathbb{E}_{\bm{\theta}_{-k} | \theta_k, \mathbf{X}} 
+  \[ \log p( \theta_k | \bm{\theta}_{-k}, \mathbf{X}) \] \}$. 
+  For model (\ref{eq:model}) and (\ref{eq:prior}) this results in:
+	\begin{align*}
+	  q(\bm{\Lambda}) & \overset{D}{=} \prod_{i=1}^{n} \mathcal{N}_d 
+      (\bm{\phi}_i, \bm{\Xi}), \\
+	  q(\mathbf{B}) & \overset{D}{=} \prod_{j=1}^{p} \mathcal{N}_d(
+	    \bm{\mu}^*_j, \bm{\Omega}^*_j) 
+	    \mathbbm{1}\{ \mathbf{b}_j^{\text{T}} \mathbf{b}_j < 1 \}, \\
+	  q(\psi_1, \dots, \psi_p) & \overset{D}{=} \prod_{j=1}^p
+	    \delta \( \psi_j - \zeta_j \),
+	\end{align*}
+	with
+	\begin{align*}
+	  \bm{\phi}_i & = \left\{ \sum_{j=1}^{p} \mathbb{E}(\psi_j)^{-1}
+      \[\mathbb{V}(\bar{\mathbf{b}}_j) + \mathbb{E}(\bar{\mathbf{b}}_j) 
+      \mathbb{E}(\bar{\mathbf{b}}^{\text{T}}_j)\] + \mathbf{I}_d \right\}^{-1}
+      \mathbb{E}(\bar{\mathbf{B}}) \mathbb{E}(\bar{\bm{\Psi}})^{-1} 
+      \mathbf{x}_i,\\ 
+    \bm{\Xi} & = \left\{ \sum_{j=1}^{p} \mathbb{E}(\psi_j)^{-1}
+      \[\mathbb{V}(\bar{\mathbf{b}}_j) + \mathbb{E}(\bar{\mathbf{b}}_j) 
+      \mathbb{E}(\bar{\mathbf{b}}_j^{\text{T}})\] + \mathbf{I}_d 
+      \right\}^{-1},\\
+    \bm{\mu}^*_j &= \[\mathbb{E}(\bm{\Lambda}^{\text{T}}\bm{\Lambda}) +
+      \gamma_j^{-1} \mathbf{I}_d\]^{-1}
+      \mathbb{E}(\bm{\Lambda}^{\text{T}})\mathbf{x}_j,\\
+    \bm{\Omega}^*_j & = \mathbb{E}(\psi_j)
+      \[\mathbb{E}(\bm{\Lambda}^{\text{T}}\bm{\Lambda}) +
+      \gamma_j^{-1} \mathbf{I}_d\]^{-1}, \\
+    \zeta_j & = 1 - \mathbb{E}(\bar{\mathbf{b}}_j^{\text{T}}) 
+      \mathbb{E}(\bar{\mathbf{b}}_j) - 
+      \text{tr}[\mathbb{V}(\bar{\mathbf{b}}_j)].
+	\end{align*}
+	The expectations involving $\bm{\Lambda}$ and $\psi_j$ are:
+	\begin{align*}
+    \mathbb{E}(\bm{\Lambda}^{\text{T}} \bm{\Lambda}) & = n\bm{\Xi} + 
+    \bm{\Phi}^{\text{T}} \bm{\Phi},\\
+    \mathbb{E}(\bm{\Lambda}) & = \bm{\Phi}, \\
+    \mathbb{E}(\psi_j) & = \zeta_j.
+  \end{align*}
+  
+  \subsubsection{Elliptical truncated multivariate Gaussian}
+  The expectations and variances involving the $\mathbf{b}_j$ are not available
+  in closed form and little bit more involved. They are expectations and
+  variances of multivariate elliptical truncated Gaussians.
+  We resort to calculation using
+  the moment generating function as in \cite{arismendi_multivariate_2017}. This
+  results in the following expressions for the expectation and variance:
+  \begin{align*}
+    \bm{\mu}_j = \mathbb{E}(\bar{\mathbf{b}}_j) & = \bm{\mu}^*_j + L^{-1} 
+      \mathbf{v}, \\
+    \bm{\Omega}_j = \mathbb{V}(\bar{\mathbf{b}}_j) & = \bm{\Omega}^*_j + L^{-1} 
+      \mathbf{V} - L^{-2} \mathbf{v} \mathbf{v}^{\text{T}},
+  \end{align*}
+  where 
+  \begin{align*}
+    L & = \sum_{t=0}^{\infty} c_t F_{p + 2t}(r^{-1}), \\
+    \mathbf{v} & = \sum_{t=0}^{\infty} \mathbf{c}'_t F_{p + 2t}(r^{-1}), \\
+    \mathbf{V} & = \sum_{t=0}^{\infty} \mathbf{C}^{''}_t F_{p + 2t}(r^{-1}), 
+  \end{align*}
+  are infinite sums that we truncate to approximate the moments. Here, 
+  $F_{p}(x)$ denotes the chi-squared distribution function of $x$ with $p$ 
+  degrees of freedom.
+  
+  The coefficients of the sums are calculate recursively:
+  \begin{align*}
+    c_t & = \frac{1}{2t}\sum_{s=0}^{t - 1} d_{t - s} c_s, \\
+    \mathbf{c}'_t & = \frac{1}{2t}\sum_{s=0}^{t - 1} \(\mathbf{d}'_{t - s} c_s +
+      d_{t - s} \mathbf{c}'_s \), \\
+    \mathbf{C}^{''}_t & = \frac{1}{2t}\sum_{s=0}^{t - 1} 
+    \(\mathbf{D}^{''}_{t - s} c_s + \mathbf{d}'_{t - s} 
+      (\mathbf{c}'_s)^{\text{T}} +  \mathbf{c}'_s
+      (\mathbf{d}'_{t - s})^{\text{T}} + d_{t - s} \mathbf{C}^{''}_s \).
+  \end{align*}
+  We write $\bm{\Omega}^*_j = \mathbf{Q} \bm{\Lambda} \mathbf{Q}^{\text{T}}$ for 
+  the eigen decomposition of $\bm{\Omega}_j^*$ and 
+  $z^m_j = r \lambda_j^{-1} (1 - r \lambda_j^{-1})^{m - 1}$. Then, the 
+  coefficients $d_{m}$, $\mathbf{d}'_m$, and $\mathbf{D}^{''}_m$ are:
+  \begin{align*}
+    d_{m} & = \sum_{j=1}^{p + 1} (1 - r \lambda_j^{-1})^m + 
+      m (\bm{\mu}_j^{*})^{\text{T}} \mathbf{Q} \bm{\Lambda}^{-1/2}
+      \text{diag}(z_j^m) \bm{\Lambda}^{-1/2} \mathbf{Q}^{\text{T}}
+      \bm{\mu}_j^{*} , \\
+    \mathbf{d}'_m & = -2m \mathbf{Q} \bm{\Lambda}^{1/2}
+      \text{diag}(z_j^m) \bm{\Lambda}^{-1/2} \mathbf{Q}^{\text{T}} 
+      \bm{\mu}_j^{*},\\
+    \mathbf{D}^{''}_m & = 2m \mathbf{Q} \bm{\Lambda}^{1/2}
+      \text{diag}(z_j^m) \bm{\Lambda}^{1/2} \mathbf{Q}^{\text{T}}.
+  \end{align*}
+  Lastly, the first recursive coefficients of the infinite sums are:
+  \begin{align*}
+    c_0 & = \exp\(-\frac{1}{2} (\bm{\mu}_j^{*})^{\text{T}} 
+      (\bm{\Omega}^*_j)^{-1}
+      \bm{\mu}_j^* \) \prod_{j=1}^{p+1}r^{1/2}\lambda_j^{-1/2}, \\
+    \mathbf{c}'_0 & = - \bm{\mu}^*_j 
+      \exp\(-\frac{1}{2} (\bm{\mu}^*_j)^{\text{T}} (\bm{\Omega}^*_j)^{-1}
+      \bm{\mu}^*_j \) \prod_{j=1}^{p+1}r^{1/2}\lambda_j^{-1/2}, \\
+    \mathbf{C}^{''}_0 & = \(\bm{\mu}^*_j (\bm{\mu}^*_j)^{\text{T}} - 
+      \bm{\Omega}^*_j \) 
+      \exp\(-\frac{1}{2} (\bm{\mu}^*_j)^{\text{T}} (\bm{\Omega}^*_j)^{-1}
+      \bm{\mu}^*_j \) \prod_{j=1}^{p+1}r^{1/2}\lambda_j^{-1/2}.
+  \end{align*}
+  The remaining $r$ is a free parameter that may be chosen to balance accuracy
+  and speed of convergence. \cite{sheil_algorithm_1977} found empirically that 
+  $r = 29/32 \min(\lambda_j)$ gives good performance. In a small simulation 
+  study we found that truncating the series at $t=50$ gives high enough 
+  accuracy for our purposes.
+  
+  \subsubsection{Variational evidence lower bound}
+  The evidence lower bound (ELBO) of model (\ref{eq:model}) and (\ref{eq:prior})
+  is given by:
+  \begin{align*}
+    \text{ELBO} & = -\frac{n(p + 1)}{2} \log 2\pi + \frac{dn}{2} - 
+      \frac{d}{2} \sum_{j=1}^{p + 1} \log \gamma_j -
+      \frac{n}{2} \log |\bm{\Delta}| - 
+      \frac{1}{2} \sum_{j=1}^{p + 1} \zeta_j^{-1} \sum_{i=1}^n \upsilon_{ij}^2 -
+      \frac{n}{2} \sum_{j=1}^{p+1} \zeta_j^{-1} \chi_j \\
+      & + \sum_{i=1}^n \bm{\phi}_i^{\text{T}} \mathbf{M} 
+      \text{diag}(\zeta_j^{-1}) \bm{\upsilon}_i - 
+      \frac{n}{2} \sum_{j=1}^{p+1} \zeta_j^{-1} 
+      \text{tr} \( \bm{\Omega}_j \bm{\Xi} \) - 
+      \frac{n}{2} \sum_{j=1}^{p+1} \zeta_j^{-1} \bm{\mu}_j^{\text{T}} \bm{\Xi}
+      \bm{\mu}_j - \frac{1}{2} \sum_{j=1}^{p+1} \zeta_j^{-1} \sum_{i=1}^n
+      \bm{\phi}_i^{\text{T}} \bm{\Omega}_j \bm{\phi}_i \\
+      & - \frac{1}{2} \sum_{j=1}^{p+1} \zeta_j^{-1} 
+      \sum_{i=1}^n \( \bm{\phi}_i^{\text{T}} \bm{\mu}_j \)^2 - 
+      \frac{n}{2} \sum_{j=1}^{p+1} \log \zeta_j - 
+      \frac{n}{2} \text{tr} \( \bm{\Delta}^{-1} \bm{\Xi} \) - 
+      \frac{1}{2} \sum_{i=1}^n \bm{\phi}_i^{\text{T}} \bm{\Delta}^{-1} 
+      \bm{\phi}_i + \frac{n}{2} \log |\bm{\Xi}| \\ 
+      & - \sum_{j=1}^{p+1} \log L_p(\mathbf{b}_j) + 
+      \sum_{j=1}^{p+1} \log L_q(\mathbf{b}_j) - 
+      \frac{d}{2} \sum_{j=1}^{p+1} \log \zeta_j + 
+      \frac{1}{2} \sum_{j=1}^{p+1} \log | \bm{\Omega}_j^* | -
+      \frac{1}{2} \sum_{j=1}^{p+1} \zeta_j^{-1} \gamma_j^{-1} 
+      \text{tr} \( \bm{\Omega}_j \) \\
+      & - \frac{1}{2} \sum_{j=1}^{p+1} \zeta_j^{-1} \gamma_j^{-1} 
+      \bm{\mu}_j^{\text{T}} \bm{\mu}_j +
+      \frac{1}{2} \sum_{j=1}^{p+1}(\bm{\mu}_j^*)^{\text{T}}
+      (\bm{\Omega}_j^*)^{-1}\bm{\mu}_j^* - 
+      \sum_{j=1}^{p+1} (\bm{\mu}_j^*)^{\text{T}} (\bm{\Omega}_j^*)^{-1}
+      \bm{\mu}_j \\
+      & + \frac{1}{2} \sum_{j=1}^{p+1} \bm{\mu}_j^{\text{T}} 
+      (\bm{\Omega}_j^*)^{-1} \bm{\mu}_j + \frac{1}{2} \sum_{j=1}^{p+1} 
+      \text{tr} \( (\bm{\Omega}_j^*)^{-1} \bm{\Omega_j} \).
+  \end{align*}
+  
+  \subsubsection{Ad hoc approach}
+  An ad hoc approach to the Bayesian correlation matrix is to freely estimate a 
+  general covariance matrix and 
+  after estimation apply a correction to ensure that the posterior mean is a
+  correlation matrix: $\forall j: \E_{\bar{\mathbf{b}}_j,\bar{\psi}_j | 
+  \bar{\mathbf{X}}} \(\mathbf{b}_j^{\text{T}} \mathbf{b}_j + \psi_j\) = 1$.
+  To that end we use the VB approximation to write
+  $$
+  c_j = \E_{\bar{\mathbf{b}}_j,\bar{\psi}_j | 
+  \bar{\mathbf{X}}} \(\mathbf{b}_j^{\text{T}} \mathbf{b}_j + \psi_j\) \approx
+  \bm{\mu}_j^{\text{T}}\bm{\mu}_j + \text{tr}\( \bm{\Omega}_j \) +
+  \frac{\zeta_j}{n/2 + \kappa_j - 1},
+  $$
+  and use the rescaled variational posterior for prediction:
+  \begin{align*}
+    q(\bar{\mathbf{B}}) & \overset{D}{=} \prod_{j=1}^{p + 1} \mathcal{N}_d 
+      (c_j^{-1/2}\bm{\mu}_j, c_j^{-1}\bm{\Omega}_j) \\
+    q(\bar{\bm{\Psi}}) & \overset{D}{=} \prod_{j=1}^{p+1} \Gamma^{-1}
+      \(\frac{n + m + d}{2} + \kappa_j, c_j^{-1}\zeta_j\).
+  \end{align*}
+  Inspection of the prediction rule then gives:
+  \begin{align*}
+    \mathbb{E}(\tilde{y}|\tilde{\mathbf{x}}) & = \tilde{\mathbf{x}}^{\text{T}}
+    \diag (c_j)\bm{\Psi}^{-1} \diag (c_j^{-1/2}) \mathbf{B}^{\text{T}}
+    \left\{ \mathbf{B} \diag (c_j^{-1/2})\diag (c_j) \bm{\Psi}^{-1} 
+    \diag (c_j^{-1/2}) \mathbf{B}^{\text{T}} + \mathbf{I}_d\right\}^{-1}
+    \bm{\beta}c_{p+1}^{-1/2} \\
+    & = \tilde{\mathbf{x}}^{\text{T}} \diag \[ \(c_j/c_{p+1}\)^{1/2} \]
+    \tilde{\bm{\beta}}, \,\, j=1,\dots, p,
+  \end{align*}
+  which shows that the ad hoc approach is a rescaling of the original 
+  prediction rule, with scaling factor the ratio of
+  feature to outcome posterior standard deviation.
+  
+  \section{Logistic regression}\label{sec:logistic}
+	In the case of sums of $N_i$ disjoint binary events $y_i$, we consider the
+	logistic model for the outcomes. In logistic models, we cannot center
+	the data to remove any fixed mean effects from the model. We therefore include
+	a mean/intercept term $\bar{\bm{\beta}} = \begin{bmatrix} \beta_0 & 
+	\bm{\beta}^{\text{T}} \end{bmatrix}^{\text{T}}$ in the observational model and
+	introduce the following Bayesian
+  factor regression model for binomial outcomes $y_i$:
+	\begin{align*}
+	  y | \bm{\lambda}, \bar{\bm{\beta}} & \sim \mathcal{B}\left(N,
+	    \expit(\beta_0 + \bm{\beta}^{\text{T}}\bm{\lambda})\right), \\
+	  \eta | \bm{\lambda}, \bar{\bm{\beta}} & \sim \mathcal{PG}(N,
+	    \beta_0 + \bm{\beta}^{\text{T}}\bm{\lambda}), \\
+	  \mathbf{x} | \bm{\lambda}, \mathbf{B}, \psi_1, \dots, \psi_p & \sim 
+	    \mathcal{N}_p(\mathbf{B}^{\text{T}} \bm{\lambda}, \bm{\Psi}), \\
+	  \bm{\lambda} & \sim \mathcal{N}_d (\mathbf{0}_{d}, \mathbf{I}_d), \\
+	  \bm{\beta} & \sim \mathcal{N}_d (\mathbf{0}_{d}, \gamma_{\bar{p}} 
+	    \mathbf{I}_d), \\
+	  \beta_0 & \sim 1, \\
+	  \mathbf{B} | \psi_1, \dots, \psi_{p} & \sim 
+  	  \prod_{j=1}^{p} \mathcal{N}_{d}(\mathbf{0}_{d}, 
+  	  \psi_{j} \gamma_{j} \mathbf{I}_d), \\
+  	\psi_1, \dots, \psi_{p} & \sim \prod_{j=1}^{p} 
+  	  \Gamma^{-1}(\kappa_j, \nu_j),
+  \end{align*}	
+	where we have introduced additional latent variables
+	$\eta$, with
+	$\mathcal{PG} (N, \delta)$, $N > 0$, $\delta \in \mathbb{R}$, the
+  P{\'o}lya-Gamma distribution \cite[]{polson_bayesian_2013}. Note that the
+  intercept $\beta_0$ is given a flat prior and is therefore not directly 
+  shrunken.
+  
+  Similar to the linear case, we switch to the joint notation with
+  $\bar{\mathbf{X}} = \begin{bmatrix} \mathbf{X} & \mathbf{y} - \mathbf{N}/2
+  \end{bmatrix}$, $\mathbf{N} = \begin{bmatrix} N_1 & \cdots & N_n 
+  \end{bmatrix}^{\text{T}}$,
+  $\bar{\mathbf{B}} = \begin{bmatrix} \mathbf{B} & \bm{\beta} \end{bmatrix}$,
+  $\bar{\mathbf{H}}=\begin{bmatrix} \mathbf{1}_{n \times p} &
+  \bm{\eta}\end{bmatrix}$, and
+  $$
+	\bar{\bm{\Psi}}=\begin{bmatrix} 
+	\bm{\Psi} & \mathbf{0}_{p \times 1} \\
+	\mathbf{0}_{1 \times p} & 1
+	\end{bmatrix}.
+	$$ 
+	In addition, we introduce a slight abuse of notation by letting
+  $\bar{\bm{\eta}}_i$ and $\bar{\bm{\eta}}_j$ denote the $i$th row and $j$th
+  column of $\bar{\mathbf{H}}$, respectively. Extension to unlabeled features
+  is straightforward by considering additional unobserved outcomes 
+  $z_i$, $i=n+1, \dots, n + m$ that follow the same model as the observed 
+  outcomes.
+  
+  \subsection{Gibbs sampler}
+  The full conditionals for $\bm{\eta}$, $\bm{\Lambda}$, $\bar{\bm{\beta}}$, 
+  $\mathbf{B}$, and
+  $\psi_1, \dots, \psi_p$ are derived in a similar way as in the linear model.
+  The full conditional for $\bm{\eta}$ is the same as in the prior:
+	\begin{align*}
+	p(\bm{\eta} | \mathbf{y}, \bm{\Lambda}, \bar{\bm{\beta}}) & =
+	  \prod_{i=1}^{n+m} p(\eta_i | \bm{\lambda}_i, \bar{\bm{\beta}}),
+	\end{align*}
+	so that we have
+	$$
+	\bm{\eta} | \mathbf{y}, \bm{\Lambda}, \bar{\bm{\beta}} \sim 
+	\prod_{i=1}^{n+m} \mathcal{PG} 
+	(N_i, \beta_0 + \bm{\beta}^{\text{T}} \bm{\lambda}_i)
+	$$
+  
+  For $\bm{\Lambda}$ we have:
+  \begin{align*}
+	  p(\bm{\Lambda} | \mathbf{X}, \mathbf{y}, \mathbf{z}, \bm{\eta}, 
+	    \bar{\mathbf{B}}, 
+  	  \psi_1, \dots \psi_p) & \propto \prod_{i=1}^{n + m} 
+  	  p(y_i | \bm{\lambda}_i, \bar{\bm{\beta}})
+  	  p(\eta_i | \bm{\lambda}_i, \bar{\bm{\beta}})
+  	  p(\mathbf{x}_i | \bm{\lambda}_i, \mathbf{B}, \psi_1, 
+  	  \dots \psi_p) p(\bm{\lambda}_i) \\
+    & \propto \prod_{i=1}^{n + m} 
+      \frac{\exp(\beta_0 + \bm{\beta}^{\text{T}} \bm{\lambda}_i)^{y_i}}
+      {\[\exp(\beta_0 + \bm{\beta}^{\text{T}} \bm{\lambda}_i) + 1\]^{N_i}} \\
+    & \quad \quad \quad \exp\[-\eta_i(\beta_0 + \bm{\beta}^{\text{T}} 
+      \bm{\lambda}_i)^2/2\] \cosh \[(\beta_0 + 
+      \bm{\beta}^{\text{T}} \bm{\lambda}_i)/2 \]^{N_i}\\
+    & \quad \quad \quad \exp \[ -\frac{1}{2} (\mathbf{x}_i - 
+      \mathbf{B}^{\text{T}} 
+      \bm{\lambda}_i)^{\text{T}} 
+      \bm{\Psi}^{-1} (\mathbf{x}_i - \mathbf{B}^{\text{T}} 
+      \bm{\lambda}_i)
+      - \frac{1}{2}\bm{\lambda}_i^{\text{T}} \bm{\lambda}_i \] \\
+    & \propto \prod_{i=1}^{n + m} 
+      \exp \bigg\{ -\frac{1}{2} \bm{\lambda}_i^{\text{T}}
+      (\mathbf{B} \bm{\Psi}^{-1} \mathbf{B}^{\text{T}} + 
+      \eta_i \bm{\beta} \bm{\beta}^{\text{T}} + \mathbf{I}_d)
+      \bm{\lambda}_i \\
+    & \quad \quad \quad + \bm{\lambda}_i^{\text{T}}
+      \[\mathbf{B} \bm{\Psi}^{-1} \mathbf{x}_i + (y_i - N_i/2 - \eta_i 
+      \beta_0)\bm{\beta}\]\bigg\},
+	\end{align*}
+	so that 
+	\begin{align*}
+	  \bm{\Lambda} | \mathbf{X}, \mathbf{y}, \mathbf{z}, \bm{\eta}, 
+	    \bar{\mathbf{B}}, \psi_1, \dots \psi_p & \sim \mathcal{N}_d 
+	    \big(\mathbf{B} \bm{\Psi}^{-1} \mathbf{B}^{\text{T}} + 
+      \eta_i \bm{\beta} \bm{\beta}^{\text{T}} + \mathbf{I}_d)^{-1}
+      \[\mathbf{B} \bm{\Psi}^{-1} \mathbf{x}_i + (y_i - N_i/2 - \eta_i 
+      \beta_0)\bm{\beta}\], \\
+    & \quad \quad \quad (\mathbf{B} \bm{\Psi}^{-1} \mathbf{B}^{\text{T}} + 
+      \eta_i \bm{\beta} \bm{\beta}^{\text{T}} + \mathbf{I}_d)^{-1}\big)
+	\end{align*}
+	
+	For $\bar{\bm{\beta}}$ we have:
+  \begin{align*}
+	  p(\bar{\bm{\beta}} | \mathbf{y}, \bm{\eta}, \bm{\Lambda}) & \propto
+	    \prod_{i=1}^{n + m} p(y_i | \bm{\lambda}_i, \bar{\bm{\beta}})
+  	  p(\eta_i | \bm{\lambda}_i, \bar{\bm{\beta}})
+  	  p(\bm{\beta})p(\beta_0) \\
+    & \propto \prod_{i=1}^{n + m}
+      \frac{\exp(\beta_0 + \bm{\beta}^{\text{T}} \bm{\lambda}_i)^{y_i}}
+      {\[\exp(\beta_0 + \bm{\beta}^{\text{T}} \bm{\lambda}_i) + 1\]^{N_i}} \\
+    & \quad \quad \quad \exp\[-\eta_i(\beta_0 + \bm{\beta}^{\text{T}} 
+      \bm{\lambda}_i)^2/2\] \cosh \[(\beta_0 + 
+      \bm{\beta}^{\text{T}} \bm{\lambda}_i)/2 \]^{N_i} \\
+    & \quad \quad \quad \exp \( \frac{\gamma_{\bar{p}}^{-1}}{2} 
+      \bm{\beta}^{\text{T}} \bm{\beta}\) \\
+    & \propto \exp \bigg\{ - \frac{1}{2} \bar{\bm{\beta}}^{\text{T}}
+      \begin{bmatrix} \sum_{i=1}^{n+m} \eta_i & \bm{\eta}^{\text{T}} 
+      \bm{\Lambda} \\
+      \bm{\Lambda}^{\text{T}} \bm{\eta} & \bm{\Lambda}^{\text{T}}
+      \text{diag} (\eta_i) \bm{\Lambda} + \gamma_{\bar{p}}^{-1} \mathbf{I}_d
+      \end{bmatrix} \bar{\bm{\beta}} \\
+    & \quad \quad \quad + \bar{\bm{\beta}}^{\text{T}} 
+      \begin{bmatrix} \sum_{i=1}^{n+m} (y_i - N_i/2) \\
+      \bm{\Lambda}^{\text{T}} (\mathbf{y} - \mathbf{N}/2)
+      \end{bmatrix}\bigg\}. 
+	\end{align*}
+	This gives:
+	\begin{align*}
+	\bar{\bm{\beta}} | \mathbf{y}, \bm{\eta}, \bm{\Lambda} & \sim \mathcal{N}_{d+1}
+	  \bigg( \begin{bmatrix} \sum_{i=1}^{n+m} \eta_i & \bm{\eta}^{\text{T}} 
+    \bm{\Lambda} \\
+    \bm{\Lambda}^{\text{T}} \bm{\eta} & \bm{\Lambda}^{\text{T}}
+    \text{diag} (\eta_i) \bm{\Lambda} + \gamma_{\bar{p}}^{-1} \mathbf{I}_d
+    \end{bmatrix}^{-1}\begin{bmatrix} \sum_{i=1}^{n+m} (y_i - N_i/2) \\
+    \bm{\Lambda}^{\text{T}} (\mathbf{y} - \mathbf{N}/2)
+    \end{bmatrix}, \\
+  & \quad \quad \quad \begin{bmatrix} \sum_{i=1}^{n+m} \eta_i & 
+    \bm{\eta}^{\text{T}} 
+    \bm{\Lambda} \\
+    \bm{\Lambda}^{\text{T}} \bm{\eta} & \bm{\Lambda}^{\text{T}}
+    \text{diag} (\eta_i) \bm{\Lambda} + \gamma_{\bar{p}}^{-1} \mathbf{I}_d
+    \end{bmatrix}^{-1}\bigg)
+	\end{align*}
+
+  Next, we derive the conditional for $\mathbf{B}$:
+  \begin{align*}
+	  p(\mathbf{B} | \mathbf{X}, \bm{\Lambda}, \psi_1, \dots \psi_p) & \propto 
+	    \prod_{i=1}^{n + m} 
+  	  p(\mathbf{x}_i | \bm{\lambda}_i, \mathbf{B}, \psi_1, 
+  	  \dots \psi_p) \prod_{j=1}^{p} p(\mathbf{b}_j | \psi_j) \\
+  	& = \prod_{j=1}^p p(\mathbf{x}_j | \bm{\Lambda}, \mathbf{b}_j, \psi_j) 
+  	  p(\mathbf{b}_j | \psi_j) \\
+  	& \propto \prod_{j=1}^p 
+  	  \exp \[ \frac{\psi_j^{-1}}{2} 
+  	  (\mathbf{x}_j - \bm{\Lambda} \mathbf{b}_j)^{\text{T}} 
+  	  (\mathbf{x}_j - \bm{\Lambda} \mathbf{b}_j) - 
+  	  \frac{\gamma_{j}^{-1} \psi_{j}^{-1}}{2}
+  	  \mathbf{b}_j^{\text{T}} \mathbf{b}_j \] \\
+    & \propto \prod_{j=1}^p \exp \bigg\{ -\frac{1}{2} 
+      \[ \mathbf{b}_{j} - ( \bm{\Lambda}^{\text{T}}\bm{\Lambda} + 
+  	  \gamma^{-1}_{j}\mathbf{I}_d)^{-1}
+  	  \bm{\Lambda}^{\text{T}} \mathbf{x}_{j}\]^{\text{T}} \\
+    & \quad \quad \quad 
+      \psi_{j}^{-1} (\bm{\Lambda}^{\text{T}}\bm{\Lambda} + 
+  	  \gamma^{-1}_{j}\mathbf{I}_d) \[ \mathbf{b}_{j} - 
+  	  ( \bm{\Lambda}^{\text{T}}\bm{\Lambda} + 
+  	  \gamma^{-1}_{j}\mathbf{I}_d)^{-1}
+  	  \bm{\Lambda}^{\text{T}} \mathbf{x}_{j}\] \bigg\},
+	\end{align*}
+	which gives
+	\begin{align*}
+  	\mathbf{B} | \mathbf{X}, \bm{\Lambda}, \psi_1, \dots \psi_p
+  	  \sim \prod_{j=1}^{p}
+    	\mathcal{N}_{d} \( ( \bm{\Lambda}^{\text{T}}\bm{\Lambda} + 
+    	\gamma^{-1}_{j}\mathbf{I}_d)^{-1}
+    	\bm{\Lambda}^{\text{T}} \mathbf{x}_{j},
+    	\psi_{j} (\bm{\Lambda}^{\text{T}}\bm{\Lambda} + 
+    	  \gamma^{-1}_{j}\mathbf{I}_d)^{-1}\). 
+	\end{align*}
+  
+  For the $\psi_{j}$, we derive:
+	\begin{align*}
+	  p(\psi_1, \dots \psi_{p} | \mathbf{x}, \bm{\Lambda}, 
+  	  \mathbf{b}) & \propto \prod_{i=1}^{n + m} 
+  	  p(\mathbf{x}_i | \bm{\lambda}_i, \mathbf{b}, \psi_1, 
+  	  \dots \psi_{p}) \prod_{j=1}^{p} 
+  	  p(\mathbf{b}_{j} | \psi_{j})
+  	  p(\psi_{j}) \\
+  	& = \prod_{j=1}^{p} p(\mathbf{x}_{j} | 
+  	  \bm{\Lambda}, \mathbf{b}_{j}, \psi_{j})
+  	  p(\mathbf{b}_{j} | \psi_{j})
+  	  p(\psi_{j}) \\
+  	& \propto \prod_{j=1}^{p} 
+  	  \psi_{j}^{-(\frac{n + m + d}{2} + \kappa_{j}) - 1} \\
+  	& \quad \quad \quad \exp \left\{ -\psi_{j}^{-1} \[\frac{1}{2} 
+  	   (\mathbf{x}_{j} - 
+  	  \bm{\Lambda}\mathbf{b}_{j})^{\text{T}}
+  	  (\mathbf{x}_{j} - 
+  	  \bm{\Lambda}\mathbf{b}_{j}) + \frac{\gamma^{-1}_{j}}{2}
+  	  \mathbf{b}_{j}^{\text{T}}\mathbf{b}_{j} + 
+  	  \nu_{j}\] \right\},
+	\end{align*}
+	to arrive at
+	\begin{align*}
+	\psi_1, \dots \psi_{p} | \mathbf{x}, \bm{\Lambda}, 
+	  \mathbf{b} \sim \prod_{j=1}^{p} 
+	  \Gamma^{-1}\(\frac{n + m + d}{2} + \kappa_{j},
+	  \frac{1}{2}(\mathbf{x}_{j} - 
+	  \bm{\Lambda}\mathbf{b}_{j})^{\text{T}}
+	  (\mathbf{x}_{j} - 
+	  \bm{\Lambda}\mathbf{b}_{j}) + 
+	  \frac{\gamma_{j}^{-1}}{2}\mathbf{b}_{j}^{\text{T}}
+	  \mathbf{b}_{j} + \nu_j \). 
+	\end{align*}
+  A Gibbs sample from the posterior is now generated by sequentially sampling 
+  from these full conditionals.
+	
+	\subsection{Variational inference}
+	If, as before, we consider the posterior factorisation:
+	$$
+	q(\bm{\eta})q(\bm{\Lambda})q(\bar{\bm{\beta}},\mathbf{B})q(\bm{\psi})
+	q(\mathbf{z})
+	$$
+	the corresponding variational posterior is:
+  \begin{subequations}\label{eq:logvariationaldistributions}
+    \begin{align*}
+      q(\eta_1, \dots, \eta_{n+m}) & \overset{D}{=} \prod_{i=1}^{n+m}
+        \mathcal{PG}(N_i, \delta_i), \\
+      q(\bm{\Lambda}) & \overset{D}{=} \prod_{i=1}^{n + m} \mathcal{N}_d 
+        (\bm{\phi}_i, \bm{\Xi}_i), \\
+      q(\bar{\bm{\beta}}) & \overset{D}{=} \mathcal{N}_{d+1} 
+        (\bm{\mu}_{\bar{p}}, \bm{\Omega}_{\bar{p}}), \\
+      q(\mathbf{B}) & \overset{D}{=} \prod_{j=1}^{p} \mathcal{N}_d 
+        (\bm{\mu}_j, \bm{\Omega}_j), \\
+      q(\psi_1, \dots, \psi_{p}) & \overset{D}{=} 
+        \prod_{j=1}^{p} \Gamma^{-1}
+        \(\frac{n + m + d}{2} + \kappa_j, \zeta_j\), \\
+      q(\mathbf{z}) & \overset{D}{=} \prod_{i=n + 1}^{n + m} \mathcal{B}
+        \left(N_i, \upsilon_i)\right),
+    \end{align*}
+  \end{subequations}
+  with parameters:
+  \begin{subequations}
+    \begin{align}
+      \delta_i & = \Big\{ \mathbb{E}(\bm{\beta}^{\text{T}}) 
+        \mathbb{V}(\bm{\lambda}_i) \mathbb{E}(\bm{\beta}) + 
+        \left[ \mathbb{E}(\bm{\lambda}_i^{\text{T}}) 
+        \mathbb{E}(\bm{\beta})\right]^2 + 
+        \text{tr} \left[ \mathbb{V}(\bm{\beta})
+        \mathbb{V}(\bm{\lambda}_i)\right] + 
+        \mathbb{E}(\bm{\lambda}_i^{\text{T}}) 
+        \mathbb{V}(\bm{\beta}) \mathbb{E}(\bm{\lambda}_i) \\
+      & \,\,\,\,\,\, \,\,\, 2 \mathbb{E}(\bm{\lambda}_i^{\text{T}}) 
+        \mathbb{C}\text{ov}(\bm{\beta},\beta_0) + 
+        2 \mathbb{E}(\bm{\lambda}_i^{\text{T}}) \mathbb{E}(\bm{\beta})
+        \mathbb{E}(\beta_0) + \mathbb{E}(\beta_0)^2 + \mathbb{V}(\beta_0) 
+        \Big\}^{1/2}, \\
+      \bm{\phi}_i & = \left\{ \sum_{\bar{j}=1}^{\bar{p}} 
+        \mathbb{E}(\bar{\eta}_{i{\bar{j}}})
+        \mathbb{E}(\bar{\psi}_{{\bar{j}}}^{-1}) 
+        \[\mathbb{V}(\bar{\mathbf{b}}_{\bar{j}}) + 
+        \mathbb{E}(\bar{\mathbf{b}}_{\bar{j}}) 
+        \mathbb{E}(\bar{\mathbf{b}}^{\text{T}}_{\bar{j}})\] + 
+        \mathbf{I}_d \right\}^{-1}
+        \big[\mathbb{E}(\bar{\mathbf{B}}) \mathbb{E}(\bar{\bm{\Psi}}^{-1}) 
+        \tilde{\mathbf{x}}_i - \mathbb{E}(\eta_i)\mathbb{E}(\beta_0)
+        \mathbb{E}(\bm{\beta}) \\
+      & \,\,\,\,\,\, \,\,\, - \mathbb{E}(\eta_i) \mathbb{C}\text{ov}
+        (\bm{\beta},\beta_0)\big],\\ 
+      \bm{\Xi}_i & = \left\{ \sum_{\bar{j}=1}^{\bar{p}} 
+        \mathbb{E}(\bar{\eta}_{i{\bar{j}}})
+        \mathbb{E}(\bar{\psi}_{{\bar{j}}}^{-1}) 
+        \[\mathbb{V}(\bar{\mathbf{b}}_{\bar{j}}) + 
+        \mathbb{E}(\bar{\mathbf{b}}_{\bar{j}}) 
+        \mathbb{E}(\bar{\mathbf{b}}^{\text{T}}_{\bar{j}})\] + 
+        \mathbf{I}_d \right\}^{-1},\\
+      \bm{\mu}_j &= \[\mathbb{E}(\bm{\Lambda}^{\text{T}})
+        \mathbb{E}(\bm{\Lambda}) + \sum_{i=1}^{n+m}\mathbb{V}(\bm{\lambda}_i) +
+        \gamma_{j}^{-1} \mathbf{I}_d\]^{-1}
+        \mathbb{E}(\bm{\Lambda}^{\text{T}})\tilde{\mathbf{x}}_j, \\
+      \bm{\Omega}_j & = \mathbb{E}(\psi_{j}^{-1})^{-1}
+        \[\mathbb{E}(\bm{\Lambda}^{\text{T}})
+        \mathbb{E}(\bm{\Lambda}) + \sum_{i=1}^{n+m}\mathbb{V}(\bm{\lambda}_i) +
+        \gamma_{j}^{-1} \mathbf{I}_d\]^{-1},\\
+      \bm{\mu}_{\bar{p}} &= \begin{bmatrix}
+        \sum_{i=1}^{n+m} \mathbb{E}(\eta_i) & \mathbb{E}(\bm{\eta})^{\text{T}}
+        \mathbb{E}(\bm{\Lambda}) \\
+      \mathbb{E}(\bm{\Lambda})^{\text{T}}\mathbb{E}(\bm{\eta}) &
+        \sum_{i=1}^{n+m} \mathbb{E}(\eta_{i}) 
+        \left[ \mathbb{V}(\bm{\lambda}_i) + \mathbb{E}(\bm{\lambda}_i)
+        \mathbb{E}(\bm{\lambda}^{\text{T}}_i) \right] + 
+        \gamma_{\bar{p}}^{-1} \mathbf{I}_d
+        \end{bmatrix}^{-1} \\
+      & \,\,\,\,\,\, \,\,\,
+        \begin{bmatrix} \mathbf{1}_{1 \times (n + m)} \\
+        \mathbb{E}(\bm{\Lambda}^{\text{T}})
+        \end{bmatrix} \tilde{\mathbf{x}}_{{\bar{p}}},\\
+      \bm{\Omega}_{\bar{p}} & = 
+        \begin{bmatrix}
+        \sum_{i=1}^{n+m} \mathbb{E}(\eta_i) & \mathbb{E}(\bm{\eta})^{\text{T}}
+        \mathbb{E}(\bm{\Lambda}) \\
+        \mathbb{E}(\bm{\Lambda})^{\text{T}}\mathbb{E}(\bm{\eta}) &
+        \sum_{i=1}^{n+m} \mathbb{E}(\eta_{i}) 
+        \left[ \mathbb{V}(\bm{\lambda}_i) + \mathbb{E}(\bm{\lambda}_i)
+        \mathbb{E}(\bm{\lambda}^{\text{T}}_i) \right] + 
+        \gamma_{\bar{p}}^{-1} \mathbf{I}_d
+        \end{bmatrix}^{-1}, \\
+      \zeta_j & = \mathbf{x}_j^{\text{T}} \mathbf{x}_j/2 - 
+        \mathbb{E}(\bar{\mathbf{b}}_j^{\text{T}})\mathbb{E}
+        (\bm{\Lambda}^{\text{T}})
+        \mathbf{x}_j + \text{tr}\[\mathbb{E}(\bm{\Lambda}^{\text{T}})
+        \mathbb{E}(\bm{\Lambda})\mathbb{V}(\bar{\mathbf{b}}_j)\]/2 \\
+      & \,\,\,\,\,\, \,\,\, +
+        \text{tr}\[\sum_{i=1}^{n+m}\mathbb{V}(\bm{\lambda}_i)
+        \mathbb{V}(\bar{\mathbf{b}}_j)\]/2 + 
+        \mathbb{E}(\bar{\mathbf{b}}_j^{\text{T}})
+        \mathbb{E}(\bm{\Lambda}^{\text{T}}) \mathbb{E}(\bm{\Lambda})
+        \mathbb{E}(\bar{\mathbf{b}}_j)/2 \\
+      & \,\,\,\,\,\, \,\,\, + \mathbb{E}(\bar{\mathbf{b}}_j^{\text{T}})
+        \sum_{i=1}^{n+m}\mathbb{V}(\bm{\lambda}_i)
+        \mathbb{E}(\bar{\mathbf{b}}_j)/2 + \gamma_j^{-1}\mathbb{E}
+        (\mathbf{b}_j^{\text{T}})\mathbb{E}(\mathbf{b}_j)/2 +
+        \gamma_j^{-1}\text{tr}\[\mathbb{V}(\mathbf{b}_j)\]/2 + \nu_j, \\
+      \upsilon_{i} & = \text{expit}\left[
+        \mathbb{E}(\bm{\beta}^{\text{T}})
+        \mathbb{E}(\bm{\lambda}_i) + \mathbb{E}(\beta_0)\right],
+    \end{align}
+  \end{subequations}
+  where
+  $$
+  \tilde{\mathbf{X}} = \begin{bmatrix}
+    \mathbf{X} & 
+    \begin{bmatrix}
+      \begin{bmatrix} 
+        \mathbf{y} \\
+        \mathbb{E}(\mathbf{z})
+      \end{bmatrix} - \mathbf{N}/2
+    \end{bmatrix}
+  \end{bmatrix}
+  $$
+  and the expectations and variances are as follows:
+  \begin{align*}
+    \mathbb{E}(\bar{\psi}_{j}^{-1}) & = \(\frac{n + m + d}{2} + \kappa_j\)/
+      \zeta_j,\\
+    \mathbb{E}(\bar{\psi}_{\bar{p}}^{-1}) & = 1,\\
+    \mathbb{V}(\bar{\mathbf{b}}_{\bar{j}}) & = \bm{\Omega}_{\bar{j}},\\
+    \mathbb{E}(\bar{\mathbf{b}}_{\bar{j}}) & = \bm{\mu}_{\bar{j}}, \\
+    \mathbb{E}(\bm{\Lambda}) & = \bm{\Phi},\\
+    \mathbb{V}(\bm{\lambda}_i)& = \bm{\Xi}_i, \\
+    \mathbb{E}(z_{i}) & = N_i \upsilon_{i},\\
+    \mathbb{E}(\eta_i) & = N_i \tanh(\delta_i/2)/(2\delta_i),
+  \end{align*}
+  with $\bm{\Phi} = \begin{bmatrix} \bm{\phi}_1 & \cdots \bm{\phi}_n 
+  \end{bmatrix}^{\text{T}}$.
+  
+  \subsection{Posterior expectation}
+  The posterior expectation $\mathbb{E}(\tilde{y} | \tilde{\mathbf{x}})$ 
+  for new data $\tilde{y},\tilde{\mathbf{x}}$ is not available in closed form. 
+  For the case $N=1$ It is given by 
+  $$
+  \mathbb{E} \left\{ \text{expit} \left[ \bm{\beta}^{\text{T}} 
+  \left(\mathbf{B} \bm{\Psi}^{-1} \mathbf{B}^{\text{T}} + 
+  \eta \bm{\beta} \bm{\beta}^{\text{T}} + \mathbf{I}_d \right)^{-1}
+  \mathbf{B}\bm{\Psi}^{-1} \tilde{\mathbf{x}}\right] \right\},
+  $$
+  where the expectation is with respect to 
+  $p(\mathbf{B}, \bm{\beta}, \bm{\Psi}, \eta | \mathbf{x})$.
+	% In the case of logistic regression, the conditional expectation of the
+	% observational model $\mathbb{E}(y | \mathbf{x}) =
+	% \mathbb{E} \[m \cdot \expit(\bm{\beta}^{\text{T}}\bm{\lambda} ) | x\]$ is not
+	% available in closed form. 
+	% 
+	An approximation to second order is:
+	$$
+	\mathbb{E}(\tilde{y} | \tilde{\mathbf{x}}) \approx \left\{ \expit(c) +
+	s \cdot \expit(c)\[1 - \expit(c)\]^2/2 -
+	s \cdot \expit(c)^2\[1 - \expit(c)\]/2 \right\},
+	$$
+	with 
+	$$
+	c=\mathbb{E} \left[\bm{\beta}^{\text{T}} 
+  \left(\mathbf{B} \bm{\Psi}^{-1} \mathbf{B}^{\text{T}} + 
+  \eta \bm{\beta} \bm{\beta}^{\text{T}} + \mathbf{I}_d \right)^{-1}
+  \mathbf{B}\bm{\Psi}^{-1} \tilde{\mathbf{x}}\right]
+  $$ 
+  and 
+  $$
+  s=\mathbb{V}
+  \left[ \bm{\beta}^{\text{T}} 
+  \left(\mathbf{B} \bm{\Psi}^{-1} \mathbf{B}^{\text{T}} + 
+  \eta \bm{\beta} \bm{\beta}^{\text{T}} + \mathbf{I}_d \right)^{-1}
+  \mathbf{B}\bm{\Psi}^{-1} \tilde{\mathbf{x}}\right].
+  $$
+  Just as in the linear
+  case, $\mathbb{E}(\tilde{y} | \tilde{\mathbf{x}})$ depends not just on
+	$\bm{\beta}$, but also on $\mathbf{B}$ and $\bm{\Psi}$, such that additional
+	observations on $\mathbf{x}$ might benefit prediction. $c$ and $s$ may be 
+	approximated in a similar way to the linear model. That is, we either
+	use a Taylor approximation or use Monte Carlo samples from the posterior
+	to approximate.
+	
+	An additional difficulty compared to the linear case is the additional
+	expectation of $\eta$, with density:
+	$$
+	p(\eta | 1, 0)(1 + \eta \bm{\beta}^{\text{T}}\bm{\beta})^{-1/2}
+	\exp \left[ \frac{1}{8} \frac{\eta (\bm{\beta}^{\text{T}}\bm{\beta})^2}
+	{1 + \eta \bm{\beta}^{\text{T}}\bm{\beta}}\right]
+	\exp \left( \frac{\bm{\beta}^{\text{T}}\bm{\beta}}{8} \right),
+	$$
+	where $p(\eta | 1, 0)$ is the density of a $\mathcal{PG}(1,0)$ distributed
+	variable. As far as we are aware, this distribution does not allow for a 
+	closed-form expectation, but the distribution is very cheap to sample from, 
+	since it only requires sampling from the inner product of a Gaussian 
+	$\bm{\beta}^{\text{T}}\bm{\beta}$, which is a generalised chi-square variable,
+	and sampling from the $\mathcal{PG}(1,0)$, for which efficient sampling 
+	schemes exist.
+	
+	\subsection{Evidence lower bound}
+	Here we give the variational evidence lower bound for the logistic model.
+  Let $\tau_j = [(n + m + d)/2 + \kappa_j]/(2\zeta_j)$, then:
+  \begin{align*}
+    \text{ELBO}= & -\frac{np}{2} \log 2 \pi + 
+      \frac{(n + m)d + p(n + m) + dp + d + 1}{2} + 
+      \sum_{i=1}^n \log \binom{N_i}{y_i} \\
+    & + \sum_{j=1}^{p} \bigg[ \log \Gamma \( \frac{(n + m + d)}{2} + \kappa_j \) -
+      \log \Gamma(\kappa_j) - \frac{d}{2} \psi \(\frac{(n + m + d)}{2} + 
+      \kappa_j\) \\
+    & \quad \quad \quad + \frac{d}{2}\log \gamma_j + \kappa_j \(1 + \log 
+      \nu_j \) \bigg] \\
+    & - \sum_{j=1}^{p} \left[\left( \frac{n + m - d}{2} + \kappa_j \right) 
+      \log \zeta_j 
+      + \frac{1}{2} \nu_j \tau_j \right] \\
+    & + \sum_{j=1}^p \[\frac{1}{2} \log |\bm{\Omega}_j| -
+      \tau_j \gamma_j^{-1} \text{tr}\(\bm{\Omega}_j\) - 
+      \sum_{i=1}^{n + m} \tau_j \text{tr}\(\bm{\Xi}_i\bm{\Omega}_j\) - 
+      \tau_j \text{tr}\(\bm{\Phi}^{\text{T}}\bm{\Phi}\bm{\Omega}_j\)\] \\
+    & + 2 \text{tr} \[\text{diag} \( \tau_j \) 
+      \tilde{\mathbf{X}}^{\text{T}} \bm{\Phi} \mathbf{M}\]
+      - \sum_{i=1}^{n + m}\text{tr} \[\text{diag} \( \tau_j \) 
+      \mathbf{M}^{\text{T}}\bm{\Xi}_i\mathbf{M}\] -
+      \text{tr} \[\text{diag} \( \tau_j \gamma_j^{-1} \) 
+      \mathbf{M}^{\text{T}}\mathbf{M}\] \\
+    & - \text{tr} \[\text{diag} \( \tau_j \) 
+      \mathbf{M}^{\text{T}}\bm{\Phi}^{\text{T}}\bm{\Phi}\mathbf{M}\] -
+      \text{tr} \[\text{diag} \( \tau_j \) 
+      \tilde{\mathbf{X}}^{\text{T}}\tilde{\mathbf{X}}\] \\  
+    & + \frac{1}{2}\sum_{i=1}^{n+m} \log |\bm{\Xi}_i| - 
+      \frac{1}{2} \sum_{i=1}^{n+m} \text{tr}( \bm{\Xi}_i) -
+      \frac{1}{2}\text{tr} \(\bm{\Phi}^{\text{T}} \bm{\Phi}\) \\
+    & - \frac{\gamma_{p+1}^{-1}}{2} \text{tr} 
+      \[ (\bm{\Omega}_{p+1})_{-1,-1} \] -
+      \frac{\gamma_{p+1}^{-1}}{2} (\bm{\mu}_{p+1}^{\text{T}})_{-1}
+      (\bm{\mu}_{p+1})_{-1} + \frac{1}{2}\log |\bm{\Omega}_{p+1}| \\
+    & - \sum_{i=n+1}^{n+m} N_i \left[ (1 - \upsilon_i)\log (1 - \upsilon_i)
+      + \upsilon_i \log \upsilon_i \right] \\
+    & + \sum_{i=1}^{n+m} N_i \left\{ (\upsilon_i - \frac{1}{2}) 
+      \left[ \begin{bmatrix} 1 & \bm{\phi}_i^{\text{T}} \end{bmatrix}
+      \bm{\mu}_{p+1} - \delta_i \right] - 
+      \log \left[ 1 + \exp ( \delta_i ) \right]\right\} \\
+    & + \sum_{i=1}^{n+m} 
+      \frac{ N_i \text{tanh} (\delta_i/2)}{4 \delta_i} 
+      \bigg[ \delta_i^2 - \bm{\mu}_{p+1}^{\text{T}} 
+      \begin{bmatrix} 
+      1 & \bm{\phi}_i^{\text{T}} \\
+      \bm{\phi}_i & \bm{\phi}_i \bm{\phi}_i^{\text{T}} + \bm{\Xi}_i
+      \end{bmatrix} \bm{\mu}_{p+1} \\
+    & \quad \quad \quad - \text{tr} \left( \bm{\Omega}_{p+1} 
+      \begin{bmatrix} 
+      1 & \bm{\phi}_i^{\text{T}} \\
+      \bm{\phi}_i & \bm{\phi}_i \bm{\phi}_i^{\text{T}} + \bm{\Xi}_i
+      \end{bmatrix} \right) \bigg].
+  \end{align*}
+	
+	\bibliographystyle{author_short3} 
+	\bibliography{refs}
+	
+	\section*{Session info}
+
+<<r session-info, eval=TRUE, echo=TRUE, tidy=TRUE>>=
+devtools::session_info()
+@
+
+\end{document}

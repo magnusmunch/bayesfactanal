@@ -1,4 +1,4 @@
 library(testthat)
-library(netren)
+library(bayesfactanal)
 
-test_check("netren")
+test_check("bayesfactanal")

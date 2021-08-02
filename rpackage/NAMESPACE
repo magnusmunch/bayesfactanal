@@ -2,6 +2,13 @@
 # exportPattern("^[^\\.]")
 exportPattern("^[[:alpha:]]+")
 
-import(Rcpp)
-
-useDynLib(netren, .registration=TRUE)
+importFrom(mvtnorm, rmvnorm)
+importFrom(foreach, foreach)
+importFrom(foreach, registerDoSEQ)
+importFrom(foreach, "%dopar%")
+importFrom(parallel, makeForkCluster)
+importFrom(parallel, stopCluster)
+importFrom(doParallel, registerDoParallel)
+importFrom(BayesLogit, rpg)
+# import(Rcpp)
+# useDynLib(bayesfactanal, .registration=TRUE)
